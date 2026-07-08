@@ -144,7 +144,7 @@
 
         let rows = '';
         if (ests.length === 0) {
-          rows = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding:30px;">No hay estimaciones integradas para este contrato</td></tr>`;
+          rows = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding:30px;">No hay estimaciones integradas para este contrato</td></tr>`;
         } else {
           ests.forEach(e => {
             let badgeClass = 'badge-presented';
@@ -153,6 +153,8 @@
             if (e.estado === 'rechazada') badgeClass = 'badge-rejected';
             if (e.estado === 'en_revision') badgeClass = 'badge-review';
 
+            const plazoBadge = this.renderPlazoBadge(e.plazo_revision || e.plazo_pago) || '-';
+
             rows += `
               <tr style="cursor:pointer;" onclick="app.viewEstimacionDetail('${e.id}')">
                 <td><strong>Periodo #${e.periodo_numero}</strong></td>
@@ -160,6 +162,7 @@
                 <td>$${e.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                 <td>$${e.liquido_a_pagar.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
                 <td><span class="badge ${badgeClass}">${e.estado}</span></td>
+                <td>${plazoBadge}</td>
                 <td>
                   <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); app.viewEstimacionDetail('${e.id}')">Inspeccionar</button>
                 </td>
@@ -226,6 +229,7 @@
                       <th>Subtotal Est.</th>
                       <th>Lquido Net.</th>
                       <th>Estatus</th>
+                      <th>Plazo Legal</th>
                       <th>Accion</th>
                     </tr>
                   </thead>
@@ -336,6 +340,15 @@
       });
     },
 
+    renderPlazoBadge(plazo) {
+      if (!plazo) return '';
+      const badgeClass = plazo.semaforo === 'rojo' ? 'badge-rejected' : plazo.semaforo === 'ambar' ? 'badge-presented' : 'badge-authorized';
+      const texto = plazo.vencido
+        ? `Vencido hace ${Math.abs(plazo.dias_restantes)} dia(s)`
+        : `${plazo.dias_restantes} de ${plazo.dias_limite} dia(s) restantes`;
+      return `<span class="badge ${badgeClass}">${texto}</span>`;
+    },
+
     async viewEstimacionDetail(estId) {
       const outlet = document.getElementById('app-router-outlet');
 
@@ -347,13 +360,17 @@
         let actionPanel = '';
 
         if (this.state.user.rol === 'contratista' && data.estado === 'borrador') {
+          const fechaLimiteEnvio = new Date(new Date(data.fecha_fin).getTime() + 6 * 24 * 60 * 60 * 1000);
+          const plazoVencido = new Date() > fechaLimiteEnvio;
+
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
               <h3>Enviar Estimacion a Revision (HU-13)</h3>
-              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Debe adjuntar el PDF de generadores antes de enviar. El plazo de presentacin vence a los 6 dias naturales del periodo (Art. 54 LOPSRM).</p>
+              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Debe adjuntar el PDF de generadores antes de enviar. El plazo de presentacin vence a los 6 dias naturales del periodo (Art. 54 LOPSRM): ${fechaLimiteEnvio.toLocaleDateString('es-MX')}.</p>
+              ${plazoVencido ? `<p style="font-size:13px; color:var(--accent-red); font-weight:600; margin-bottom:15px;">El plazo de 6 dias naturales para presentar esta estimacion ya vencio. No se puede enviar.</p>` : ''}
               <form id="send-est-form" style="display:flex; align-items:center; gap:20px;">
-                <input type="file" id="send-est-pdf" accept=".pdf" required style="max-width:300px;">
-                <button type="submit" class="btn btn-primary">Enviar formalmente</button>
+                <input type="file" id="send-est-pdf" accept=".pdf" ${plazoVencido ? 'disabled' : 'required'} style="max-width:300px;">
+                <button type="submit" class="btn btn-primary" ${plazoVencido ? 'disabled' : ''}>Enviar formalmente</button>
               </form>
             </div>
           `;
@@ -470,6 +487,8 @@
               <h2>Caratula de Estimacion (Liquidacion)</h2>
               <table style="width:100%; margin-top:16px;">
                 <tr><td style="color:var(--text-muted); font-weight:600; width:45%;">Estatus actual:</td><td><span class="badge badge-presented">${data.estado.toUpperCase()}</span></td></tr>
+                ${data.plazo_revision ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de revision (Art. 54 LOPSRM, 15 dias):</td><td>${this.renderPlazoBadge(data.plazo_revision)}</td></tr>` : ''}
+                ${data.plazo_pago ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de pago (Art. 54 LOPSRM, 20 dias):</td><td>${this.renderPlazoBadge(data.plazo_pago)}</td></tr>` : ''}
                 <tr><td style="color:var(--text-muted); font-weight:600;">Importe de los Trabajos Ejecutados:</td><td>$${data.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
                 <tr><td style="color:var(--text-muted); font-weight:600;">Amortizacion del Anticipo (${contract.anticipo_porcentaje}%):</td><td style="color:var(--accent-red); font-weight:600;">- $${data.anticipo_amortizado.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
                 <tr><td style="color:var(--text-muted); font-weight:600;">Retencion 5 al millar (Vigilancia e Inspeccion, Art. 191 LFD):</td><td style="color:var(--accent-red); font-weight:600;">- $${data.retencion_5_millar.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>

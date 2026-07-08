@@ -6,28 +6,40 @@ const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
-// HU-20: Transito a pago - suficiencia presupuestal
+// HU-20: Transito a pago - suficiencia presupuestal (Art. 24 LOPSRM), contra el
+// techo contractual real del contrato (monto menos lo ya comprometido/pagado en
+// otras estimaciones), no un techo global compartido entre todos los contratos.
 router.post('/estimaciones/:id/presupuesto', authenticate, authorizeRoles('contratista', 'finanzas'), (req, res) => {
   const est_id = req.params.id;
   const est = store.findOne('estimaciones', e => e.id === est_id);
   if (!est) return res.status(404).json({ error: "Estimacion no encontrada" });
 
-  const techoAnualDisponible = 15000000.00;
+  const contract = store.findOne('contratos', c => c.id === est.contrato_id);
+  if (!contract) return res.status(404).json({ error: "Contrato no encontrado" });
 
-  if (est.liquido_a_pagar > techoAnualDisponible) {
+  const comprometidoEnOtras = store.find('estimaciones', e =>
+    e.contrato_id === est.contrato_id &&
+    e.id !== est.id &&
+    ['autorizada', 'en_pago', 'pagada'].includes(e.estado)
+  ).reduce((sum, e) => sum + (e.liquido_a_pagar || 0), 0);
+
+  const techoDisponible = contract.monto - comprometidoEnOtras;
+
+  if (est.liquido_a_pagar > techoDisponible) {
     return res.status(400).json({
-      error: `Restriccin del Art. 24 LOPSRM: Insuficiencia presupuestal. El total de la estimacion ($${est.liquido_a_pagar.toFixed(2)}) excede el presupuesto disponible ($${techoAnualDisponible.toFixed(2)}).`
+      error: `Restriccin del Art. 24 LOPSRM: Insuficiencia presupuestal. El liquido de la estimacion ($${est.liquido_a_pagar.toFixed(2)}) excede el presupuesto contractual disponible del contrato ${contract.folio} ($${techoDisponible.toFixed(2)}).`
     });
   }
 
   return res.json({
     message: "Verificacion de suficiencia presupuestal exitosa (Art. 24 LOPSRM).",
-    disponible: techoAnualDisponible,
+    disponible: techoDisponible,
     solicitado: est.liquido_a_pagar
   });
 });
 
-// HU-20: Cargar soportes y generar instruccion
+// HU-20: Cargar soportes y generar instruccion. Exige factura, CFDI y, cuando el
+// contrato tiene registrada una fianza de cumplimiento, que siga vigente.
 router.post('/estimaciones/:id/instruccion-pago', authenticate, authorizeRoles('contratista', 'finanzas'), upload.fields([
   { name: 'factura', maxCount: 1 },
   { name: 'cfdi', maxCount: 1 }
@@ -44,11 +56,30 @@ router.post('/estimaciones/:id/instruccion-pago', authenticate, authorizeRoles('
     return res.status(400).json({ error: "Debe cargar la Factura y el XML de CFDI correspondientes" });
   }
 
+  const fianzaCumplimiento = store.findOne('fianzas', f => f.contrato_id === est.contrato_id && f.tipo === 'cumplimiento');
+  if (fianzaCumplimiento) {
+    if (fianzaCumplimiento.vigencia && new Date(fianzaCumplimiento.vigencia) < new Date()) {
+      return res.status(400).json({ error: "La fianza de cumplimiento del contrato esta vencida. Debe renovarse/endosarse antes de generar la instruccion de pago." });
+    }
+  }
+
+  const now = new Date().toISOString();
   store.update('estimaciones', est_id, {
     estado: 'en_pago',
     pdf_factura: `/uploads/${req.files['factura'][0].filename}`,
     pdf_cfdi: `/uploads/${req.files['cfdi'][0].filename}`,
-    fecha_instruccion_pago: new Date().toISOString()
+    fecha_instruccion_pago: now
+  });
+
+  const contract = store.findOne('contratos', c => c.id === est.contrato_id);
+  store.insert('notificaciones', {
+    contrato_id: est.contrato_id,
+    tipo: 'instruccion_pago',
+    canal: 'sistema',
+    mensaje: `Instruccion de pago generada para la estimacion Periodo #${est.periodo_numero} del contrato ${contract ? contract.folio : est.contrato_id}. Plazo de pago: 20 dias naturales (Art. 54 LOPSRM).`,
+    leida: false,
+    creado_para_rol: 'finanzas',
+    creado_en: now
   });
 
   return res.json({ message: "Instruccin de pago generada. Estatus actualizado a 'en_pago'." });

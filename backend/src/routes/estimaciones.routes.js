@@ -5,6 +5,7 @@ const { authenticate, authorizeRoles } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { buildWorkbookBuffer, sendXlsx } = require('../utils/xlsxExport');
 const { buildTablePdfBuffer, sendPdf } = require('../utils/pdfExport');
+const { calcularPlazoLegal } = require('../utils/plazosLegales');
 
 const router = express.Router();
 
@@ -111,16 +112,43 @@ router.post('/estimaciones/:id/enviar', authenticate, authorizeRoles('contratist
     pdf_soporte: req.file ? `/uploads/${req.file.filename}` : est.pdf_soporte
   });
 
+  const contract = store.findOne('contratos', c => c.id === est.contrato_id);
+  const mensaje = `Estimacion Periodo #${est.periodo_numero} del contrato ${contract ? contract.folio : est.contrato_id} fue presentada y espera revision. Plazo de revision: 15 dias naturales (Art. 54 LOPSRM).`;
+  ['supervision', 'residente'].forEach(rol => {
+    store.insert('notificaciones', {
+      contrato_id: est.contrato_id,
+      tipo: 'estimacion_presentada',
+      canal: 'sistema',
+      mensaje,
+      leida: false,
+      creado_para_rol: rol,
+      creado_en: now.toISOString()
+    });
+  });
+
   return res.json({ message: "Estimacion enviada formalmente a revision.", fecha_presentacion: now.toISOString() });
 });
 
 // HU-14: Historial de estimaciones con filtros por periodo y estado (AND)
+// HU-13/HU-15: incluye el semaforo de 15 dias de revision (Art. 54 LOPSRM)
+// HU-20: incluye el semaforo de 20 dias de pago (Art. 54 LOPSRM)
 router.get('/contratos/:id/estimaciones', authenticate, (req, res) => {
   const { periodo, estado } = req.query;
   let list = store.find('estimaciones', e => e.contrato_id === req.params.id);
   if (periodo) list = list.filter(e => String(e.periodo_numero) === String(periodo));
   if (estado) list = list.filter(e => e.estado === estado);
-  return res.json(list.sort((a, b) => a.periodo_numero - b.periodo_numero));
+
+  const withPlazos = list.map(e => ({
+    ...e,
+    plazo_revision: ['presentada', 'en_revision'].includes(e.estado) && e.fecha_presentacion
+      ? calcularPlazoLegal(e.fecha_presentacion, 15)
+      : null,
+    plazo_pago: ['autorizada', 'en_pago'].includes(e.estado) && e.fecha_autorizacion_residencia
+      ? calcularPlazoLegal(e.fecha_autorizacion_residencia, 20)
+      : null
+  }));
+
+  return res.json(withPlazos.sort((a, b) => a.periodo_numero - b.periodo_numero));
 });
 
 // HU-15: Revision tecnica (Supervision)
