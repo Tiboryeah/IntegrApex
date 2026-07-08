@@ -6,6 +6,20 @@ const { authenticate, authorizeRoles } = require('../middleware/auth');
 const router = express.Router();
 
 // HU-17: Tablero de estimaciones aceptadas y en proceso
+const ESTADOS_ACTIVOS = ['presentada', 'en_revision', 'autorizada', 'en_pago', 'pagada'];
+
+function buildLineaTiempo(e) {
+  const hitos = [
+    { estado: 'borrador', fecha: e.fecha_creacion },
+    { estado: 'presentada', fecha: e.fecha_presentacion },
+    { estado: 'en_revision', fecha: e.fecha_revision_supervision },
+    { estado: e.estado === 'rechazada' ? 'rechazada' : 'autorizada', fecha: e.fecha_autorizacion_residencia },
+    { estado: 'en_pago', fecha: e.fecha_instruccion_pago },
+    { estado: 'pagada', fecha: e.fecha_pago_efectuado }
+  ];
+  return hitos.filter(h => !!h.fecha).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+}
+
 router.get('/tableros/estimaciones-activas', authenticate, (req, res) => {
   const user = req.user;
   const allEstimations = store.getCollection('estimaciones');
@@ -13,7 +27,7 @@ router.get('/tableros/estimaciones-activas', authenticate, (req, res) => {
 
   const activeEstimations = [];
   allEstimations.forEach(e => {
-    if (e.estado === 'rechazada' || e.estado === 'borrador') return;
+    if (!ESTADOS_ACTIVOS.includes(e.estado)) return;
 
     const contract = contracts.find(c => c.id === e.contrato_id);
     if (!contract) return;
@@ -27,6 +41,7 @@ router.get('/tableros/estimaciones-activas', authenticate, (req, res) => {
     let requiereMiAccion = false;
     if (user.rol === 'supervision' && e.estado === 'presentada') requiereMiAccion = true;
     if (user.rol === 'residente' && e.estado === 'en_revision') requiereMiAccion = true;
+    if (user.rol === 'contratista' && e.estado === 'autorizada') requiereMiAccion = true;
     if (user.rol === 'finanzas' && e.estado === 'en_pago') requiereMiAccion = true;
 
     const startTime = e.fecha_presentacion ? new Date(e.fecha_presentacion) : new Date(e.fecha_creacion);
@@ -40,11 +55,26 @@ router.get('/tableros/estimaciones-activas', authenticate, (req, res) => {
       estado: e.estado,
       monto: e.liquido_a_pagar,
       dias_transcurridos: elapsedDays,
-      requiere_mi_accion: requiereMiAccion
+      requiere_mi_accion: requiereMiAccion,
+      linea_tiempo: buildLineaTiempo(e)
     });
   });
 
-  return res.json(activeEstimations);
+  const resumen = {
+    total: activeEstimations.length,
+    monto_total: activeEstimations.reduce((sum, e) => sum + (e.monto || 0), 0),
+    requieren_mi_accion: activeEstimations.filter(e => e.requiere_mi_accion).length,
+    por_estado: ESTADOS_ACTIVOS.reduce((acc, estado) => {
+      const enEseEstado = activeEstimations.filter(e => e.estado === estado);
+      acc[estado] = {
+        count: enEseEstado.length,
+        monto: enEseEstado.reduce((sum, e) => sum + (e.monto || 0), 0)
+      };
+      return acc;
+    }, {})
+  };
+
+  return res.json({ resumen, estimaciones: activeEstimations });
 });
 
 // HU-18: Vista ejecutiva del portafolio con semaforos

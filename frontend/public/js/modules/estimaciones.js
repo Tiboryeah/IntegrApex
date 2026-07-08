@@ -3,6 +3,130 @@
 
   window.IntegrApexModules.estimaciones = {
     // ==========================================
+    // TABLERO DE ESTIMACIONES ACTIVAS (HU-17)
+    // ==========================================
+    async renderTableroEstimaciones() {
+      this.showLoggedInUI();
+      const outlet = document.getElementById('app-router-outlet');
+
+      try {
+        const data = await this.api('/api/tableros/estimaciones-activas');
+        const { resumen, estimaciones } = data;
+
+        const estadoLabel = {
+          presentada: 'Presentada',
+          en_revision: 'En revision',
+          autorizada: 'Autorizada',
+          en_pago: 'En pago',
+          pagada: 'Pagada'
+        };
+        const estadoBadge = {
+          presentada: 'badge-presented',
+          en_revision: 'badge-review',
+          autorizada: 'badge-authorized',
+          en_pago: 'badge-review',
+          pagada: 'badge-paid'
+        };
+        const money = v => `$${(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+        const resumenCards = ['presentada', 'en_revision', 'autorizada', 'en_pago', 'pagada'].map(estado => {
+          const info = resumen.por_estado[estado] || { count: 0, monto: 0 };
+          return `
+            <div class="col-2" style="min-width:140px;">
+              <div class="glass-panel" style="padding:14px; text-align:center;">
+                <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:700;">${estadoLabel[estado]}</div>
+                <div style="font-size:22px; font-weight:700; color:#0f172a; margin-top:4px;">${info.count}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${money(info.monto)}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        const pendientes = estimaciones.filter(e => e.requiere_mi_accion);
+        const pendientesHtml = pendientes.length === 0
+          ? `<div style="padding:20px; text-align:center; color:var(--text-muted); font-size:13px;">No tienes pendientes por resolver en este momento.</div>`
+          : pendientes.map(e => `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid var(--border-color);">
+                <div>
+                  <span class="user-badge" style="background:var(--ipn-maroon); color:white; border:none;">${e.folio_contrato}</span>
+                  <strong style="margin-left:8px;">Periodo #${e.periodo}</strong>
+                  <span class="badge ${estadoBadge[e.estado]}" style="margin-left:8px;">${estadoLabel[e.estado]}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <span style="font-size:12px; color:var(--text-muted);">${e.dias_transcurridos} dia(s)</span>
+                  <button class="btn btn-primary btn-sm" onclick="app.verEstimacionDesdeTablero('${e.contrato_id}', '${e.id}')">Atender</button>
+                </div>
+              </div>
+            `).join('');
+
+        const filaLineaTiempo = linea => linea.map(h => `<span class="badge ${estadoBadge[h.estado] || 'badge-review'}" style="font-size:9.5px; margin-right:4px;" title="${new Date(h.fecha).toLocaleString('es-MX')}">${estadoLabel[h.estado] || h.estado}</span>`).join('');
+
+        const filas = estimaciones.length === 0
+          ? `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">No hay estimaciones activas para mostrar</td></tr>`
+          : estimaciones.map(e => `
+              <tr style="cursor:pointer;" onclick="app.verEstimacionDesdeTablero('${e.contrato_id}', '${e.id}')">
+                <td><strong>${e.folio_contrato}</strong></td>
+                <td>Periodo #${e.periodo}</td>
+                <td><span class="badge ${estadoBadge[e.estado]}">${estadoLabel[e.estado]}</span></td>
+                <td>${money(e.monto)}</td>
+                <td>${e.dias_transcurridos} dia(s)</td>
+                <td>${filaLineaTiempo(e.linea_tiempo)}</td>
+                <td>${e.requiere_mi_accion ? '<span class="badge badge-rejected">Requiere mi accion</span>' : '-'}</td>
+              </tr>
+            `).join('');
+
+        outlet.innerHTML = `
+          <div class="main-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <h1>Tablero de Estimaciones (HU-17)</h1>
+              <button class="btn btn-secondary" onclick="app.navigate('inicio')">
+                <span class="material-icons-round">arrow_back</span> Inicio
+              </button>
+            </div>
+
+            <div class="dashboard-grid" style="margin-bottom:20px;">
+              ${resumenCards}
+            </div>
+
+            <div class="glass-panel" style="margin-bottom:20px;">
+              <h2>Mis Pendientes</h2>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px; margin-bottom:8px;">Estimaciones que requieren accion de tu rol (${this.state.user.rol}) ahora mismo.</p>
+              <div>${pendientesHtml}</div>
+            </div>
+
+            <div class="glass-panel">
+              <h2>Estimaciones Activas y en Proceso</h2>
+              <div class="table-container" style="margin-top:16px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Contrato</th>
+                      <th>Periodo</th>
+                      <th>Estado</th>
+                      <th>Monto</th>
+                      <th>Dias transcurridos</th>
+                      <th>Linea de tiempo</th>
+                      <th>Accion requerida</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filas}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (e) {}
+    },
+
+    async verEstimacionDesdeTablero(contratoId, estId) {
+      this.state.currentContractId = contratoId;
+      await this.navigate('contract-detail', { id: contratoId });
+      this.viewEstimacionDetail(estId);
+    },
+
+    // ==========================================
     // RENDER ESTIMACIONES MODULE (HU-12 a HU-16)
     // ==========================================
     async renderEstimacionesScreen() {

@@ -131,6 +131,8 @@ const app = {
       await this.renderAdminApprovals();
     } else if (screen === 'por-firmar-bandeja') {
       await this.renderPorFirmarBandeja();
+    } else if (screen === 'tablero-estimaciones') {
+      await this.renderTableroEstimaciones();
     }
   },
 
@@ -262,6 +264,21 @@ const app = {
         <a class="sidebar-menu-item" onclick="app.openContractsPortafolio()">
           <span class="item-left"><span class="material-icons-round">dashboard</span><span>Portafolio</span></span>
           <span class="hu-tag">HU-18</span>
+        </a>
+      `;
+    }
+    if (rol === 'residente' || rol === 'contratista' || rol === 'supervision' || rol === 'finanzas') {
+      html += `
+        <a class="sidebar-menu-item" onclick="app.navigate('tablero-estimaciones')">
+          <span class="item-left"><span class="material-icons-round">assignment_turned_in</span><span>Tablero de Estimaciones</span></span>
+          <span class="hu-tag">HU-17</span>
+        </a>
+      `;
+    }
+    if (rol === 'residente' || rol === 'contratista' || rol === 'supervision') {
+      html += `
+        <a class="sidebar-menu-item" onclick="app.navigate('por-firmar-bandeja')">
+          <span class="item-left"><span class="material-icons-round">border_color</span><span>Por Firmar</span></span>
         </a>
       `;
     }
