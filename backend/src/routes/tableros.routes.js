@@ -116,36 +116,4 @@ router.get('/tableros/portafolio', authenticate, authorizeRoles('dependencia'), 
   return res.json(portafolio);
 });
 
-// HU-19: Exportacion de reportes (entrega datos)
-router.get('/contratos/:id/reporte-data', authenticate, (req, res) => {
-  const contractId = req.params.id;
-  const contract = store.findOne('contratos', c => c.id === contractId);
-  if (!contract) return res.status(404).json({ error: "Contrato no encontrado" });
-
-  const notes = store.find('notas', n => n.contrato_id === contractId);
-  const estimations = store.find('estimaciones', e => e.contrato_id === contractId);
-  const convenios = store.find('convenios', c => c.contrato_id === contractId);
-  const fianzas = store.find('fianzas', f => f.contrato_id === contractId);
-
-  const reportes = {
-    fisico: {
-      avance_fisico_real: estimations.filter(e => e.estado === 'pagada' || e.estado === 'autorizada').reduce((sum, e) => sum + e.subtotal, 0),
-      programado: contract.monto,
-      conceptos: contract.catalogo
-    },
-    financiero: {
-      total_pagado: estimations.filter(e => e.estado === 'pagada').reduce((sum, e) => sum + e.liquido_a_pagar, 0),
-      techo: contract.monto,
-      anticipo_amortizado: estimations.reduce((sum, e) => sum + e.anticipo_amortizado, 0)
-    },
-    estimaciones: estimations.map(e => ({ periodo: e.periodo_numero, estado: e.estado, total: e.total, liquido: e.liquido_a_pagar })),
-    observaciones: estimations.flatMap(e => e.observaciones.map(o => ({ periodo: e.periodo_numero, ...o }))),
-    bitacora: notes.map(n => ({ folio: n.folio, tipo: n.tipo, autor: n.creado_por_nombre, fecha: n.fecha })),
-    modificatorios: convenios,
-    penalizaciones: estimations.map(e => ({ periodo: e.periodo_numero, monto: e.penalizaciones })).filter(p => p.monto > 0)
-  };
-
-  return res.json(reportes);
-});
-
 module.exports = router;

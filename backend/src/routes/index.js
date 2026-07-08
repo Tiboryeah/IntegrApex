@@ -11,6 +11,7 @@ router.use(require('./minutasVisitas.routes'));
 router.use(require('./trabajosPeriodo.routes'));
 router.use(require('./estimaciones.routes'));
 router.use(require('./tableros.routes'));
+router.use(require('./reportes.routes'));
 router.use(require('./pagos.routes'));
 router.use(require('./alertas.routes'));
 

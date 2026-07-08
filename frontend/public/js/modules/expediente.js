@@ -98,9 +98,9 @@
             </div>
 
             <div class="glass-panel" style="margin-top: 24px;">
-              <h2>Exportar Expediente (HU-19)</h2>
+              <h2>Exportar Reportes (HU-19)</h2>
               <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 8px; margin-bottom: 16px; line-height: 1.45;">
-                Descarga cualquiera de los 7 reportes oficiales en formato CSV para su consulta en Microsoft Excel.
+                Descarga cualquiera de los 7 reportes oficiales en Excel o PDF, acumulado o acotado a un periodo.
               </p>
               <div class="form-group">
                 <label>Seleccionar Reporte</label>
@@ -114,7 +114,35 @@
                   <option value="penalizaciones">7. Registro de Penalizaciones</option>
                 </select>
               </div>
-              <button class="btn btn-secondary" style="width: 100%; font-size:13px; padding:9px;" onclick="app.descargarReporteExcel()">
+              <div class="form-group">
+                <label>Formato</label>
+                <select id="export-report-formato" style="font-size: 13px; padding: 8px;">
+                  <option value="xlsx">Excel (.xlsx)</option>
+                  <option value="pdf">PDF</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Periodo</label>
+                <select id="export-report-periodo-tipo" style="font-size: 13px; padding: 8px;" onchange="app.togglePeriodoReporteInput()">
+                  <option value="acumulado">Acumulado (todo el historico)</option>
+                  <option value="mensual">Mensual</option>
+                  <option value="trimestral">Trimestral</option>
+                </select>
+              </div>
+              <div class="form-group" id="export-report-periodo-valor-wrapper" style="display:none;">
+                <label>Valor del periodo</label>
+                <input type="month" id="export-report-periodo-mensual" style="display:none; font-size: 13px; padding: 8px;">
+                <div id="export-report-periodo-trimestral" style="display:none; gap:8px;">
+                  <select id="export-report-trimestre" style="font-size: 13px; padding: 8px;">
+                    <option value="1">Trimestre 1 (Ene-Mar)</option>
+                    <option value="2">Trimestre 2 (Abr-Jun)</option>
+                    <option value="3">Trimestre 3 (Jul-Sep)</option>
+                    <option value="4">Trimestre 4 (Oct-Dic)</option>
+                  </select>
+                  <input type="number" id="export-report-anio" value="${new Date().getFullYear()}" style="max-width:90px; font-size: 13px; padding: 8px;">
+                </div>
+              </div>
+              <button class="btn btn-secondary" style="width: 100%; font-size:13px; padding:9px;" onclick="app.descargarReporte()">
                 <span class="material-icons-round" style="font-size:16px;">download</span> Descargar Reporte
               </button>
             </div>
@@ -311,83 +339,53 @@
       if (outlet) outlet.style.display = 'none';
     },
 
-    async descargarReporteExcel() {
-      const reportType = document.getElementById('export-report-select').value;
-      try {
-        const data = await this.api(`/api/contratos/${this.state.currentContractId}/reporte-data`);
+    togglePeriodoReporteInput() {
+      const tipo = document.getElementById('export-report-periodo-tipo').value;
+      const wrapper = document.getElementById('export-report-periodo-valor-wrapper');
+      const mensual = document.getElementById('export-report-periodo-mensual');
+      const trimestral = document.getElementById('export-report-periodo-trimestral');
 
-        let csvContent = "data:text/csv;charset=utf-8,﻿";
-        let filename = `Reporte_${reportType}_${this.state.currentContractData.folio}.csv`;
-
-        if (reportType === 'fisico') {
-          csvContent += "Clave,Concepto,Unidad,Cantidad Contratada,Precio Unitario,Importe Contratado\n";
-          data.fisico.conceptos.forEach(c => {
-            const imp = c.precio_unitario * c.cantidad;
-            csvContent += `"${c.clave}","${c.descripcion.replace(/"/g, '""')}","${c.unidad}",${c.cantidad},${c.precio_unitario},${imp}\n`;
-          });
-        }
-        else if (reportType === 'financiero') {
-          csvContent += "Concepto Financiero,Monto Contractual ($),Monto Pagado ($),Avance Financiero (%)\n";
-          const total = data.financiero.techo;
-          const pagado = data.financiero.total_pagado;
-          const pct = total > 0 ? (pagado / total) * 100 : 0;
-          csvContent += `"Techo Presupuestal Contractual",${total},${pagado},${pct.toFixed(2)}%\n`;
-          csvContent += `"Amortizacion Anticipo Acumulada",${data.financiero.anticipo_amortizado},"N/A","N/A"\n`;
-        }
-        else if (reportType === 'estimaciones') {
-          csvContent += "Periodo Numero,Estado Estimacion,Importe Total ($),Liquido a Pagar ($)\n";
-          data.estimaciones.forEach(e => {
-            csvContent += `${e.periodo},"${e.estado}",${e.total},${e.liquido}\n`;
-          });
-        }
-        else if (reportType === 'observaciones') {
-          csvContent += "Periodo,Observacion Tecnica\n";
-          if (data.observaciones.length === 0) {
-            csvContent += "N/A,Sin observaciones registradas\n";
-          } else {
-            data.observaciones.forEach(o => {
-              csvContent += `${o.periodo},"${o.comentario.replace(/"/g, '""')}"\n`;
-            });
-          }
-        }
-        else if (reportType === 'bitacora') {
-          csvContent += "Folio Nota,Tipo Nota,Autor Emisor,Fecha Emision\n";
-          data.bitacora.forEach(n => {
-            csvContent += `${n.folio},"${n.tipo}","${n.autor}","${new Date(n.fecha).toLocaleDateString()}"\n`;
-          });
-        }
-        else if (reportType === 'modificatorios') {
-          csvContent += "ID Convenio,Descripcion,Ajuste Monto ($),Ajuste Plazo (dias),Articulo LOPSRM,Fecha\n";
-          if (data.modificatorios.length === 0) {
-            csvContent += "N/A,Sin convenios modificatorios registrados,0,0,N/A,N/A\n";
-          } else {
-            data.modificatorios.forEach(m => {
-              csvContent += `"${m.id}","${m.descripcion.replace(/"/g, '""')}",${m.cambio_monto},${m.cambio_plazo},"${m.articulo_aplicado}","${new Date(m.creado_en).toLocaleDateString()}"\n`;
-            });
-          }
-        }
-        else if (reportType === 'penalizaciones') {
-          csvContent += "Periodo Numero,Monto Penalizacion / Deductiva ($)\n";
-          if (data.penalizaciones.length === 0) {
-            csvContent += "N/A,Sin penalizaciones aplicadas\n";
-          } else {
-            data.penalizaciones.forEach(p => {
-              csvContent += `${p.periodo},${p.monto}\n`;
-            });
-          }
-        }
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        this.showToast('Reporte exportado correctamente', 'success');
-      } catch (e) {
-        this.showToast('Error al exportar reporte', 'error');
+      if (tipo === 'acumulado') {
+        wrapper.style.display = 'none';
+        return;
       }
+      wrapper.style.display = 'block';
+      mensual.style.display = tipo === 'mensual' ? 'block' : 'none';
+      trimestral.style.display = tipo === 'trimestral' ? 'flex' : 'none';
+    },
+
+    descargarReporte() {
+      const reportType = document.getElementById('export-report-select').value;
+      const formato = document.getElementById('export-report-formato').value;
+      const periodoTipo = document.getElementById('export-report-periodo-tipo').value;
+
+      let periodoValor = '';
+      if (periodoTipo === 'mensual') {
+        periodoValor = document.getElementById('export-report-periodo-mensual').value;
+        if (!periodoValor) {
+          this.showToast('Selecciona el mes a exportar', 'info');
+          return;
+        }
+      } else if (periodoTipo === 'trimestral') {
+        const trimestre = document.getElementById('export-report-trimestre').value;
+        const anio = document.getElementById('export-report-anio').value;
+        if (!anio) {
+          this.showToast('Captura el ano del trimestre a exportar', 'info');
+          return;
+        }
+        periodoValor = `${anio}-${trimestre}`;
+      }
+
+      const params = new URLSearchParams({ formato, periodo_tipo: periodoTipo });
+      if (periodoValor) params.set('periodo_valor', periodoValor);
+
+      const url = `/api/contratos/${this.state.currentContractId}/reportes/${reportType}/export?${params.toString()}`;
+      const link = document.createElement('a');
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast(`Generando reporte en ${formato === 'pdf' ? 'PDF' : 'Excel'}...`, 'success');
     }
   };
 })();
