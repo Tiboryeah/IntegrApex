@@ -1,0 +1,12 @@
+{
+  "name": "integrapex-root",
+  "version": "1.0.0",
+  "description": "IntegrApex - Sistema de Gestion de Contratos de Obra Publica",
+  "scripts": {
+    "postinstall": "cd backend && npm install",
+    "start": "cd backend && node server.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}

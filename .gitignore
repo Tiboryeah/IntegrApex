@@ -1,0 +1,19 @@
+node_modules/
+backend/node_modules/
+
+# Runtime state, regenerated from backend/src/db/store.js initialState.
+# store.js resolves its DB path to backend/data/db.json (not the root data/ folder).
+backend/data/db.json
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+
+# Stale leftover folder, unused by current code paths (server.js/store.js both
+# resolve to backend/data/, not this one). Left on disk untouched, just untracked.
+/data/
+
+# Previous attempt, out of scope (see README)
+IntegrApex-main/
+IntegrApex-main.zip
+
+# Local tooling
+.claude/
