@@ -124,12 +124,26 @@
                 <input type="date" id="s-f-inicio">
               </div>
               <div class="col-3 form-group" style="margin-bottom:0;">
+                <label>Fecha Fin</label>
+                <input type="date" id="s-f-fin">
+              </div>
+              <div class="col-3 form-group" style="margin-bottom:0;">
+                <label>Firmante</label>
+                <select id="s-firmante">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+              <div class="col-3 form-group" style="margin-bottom:0;">
+                <label>Vinculo (Folio)</label>
+                <input type="number" id="s-vinculo" placeholder="Ej. 2">
+              </div>
+              <div class="col-5 form-group" style="margin-bottom:0;">
                 <label>Busqueda Texto</label>
                 <input type="text" id="s-query" placeholder="Palabra clave...">
               </div>
-              <div class="col-3" style="display:flex; align-items:flex-end; gap:8px;">
+              <div class="col-4" style="display:flex; align-items:flex-end; gap:8px;">
                 <button type="submit" class="btn btn-primary" style="width:100%; height:41px;">Buscar</button>
-                <button type="button" class="btn btn-secondary" style="height:41px;" onclick="app.exportBitacoraExcel()">Exportar</button>
+                <button type="button" class="btn btn-secondary" style="height:41px;" onclick="app.exportBitacoraExcel()">Exportar seleccion</button>
               </div>
             </form>
           </div>
@@ -195,24 +209,49 @@
         this.submitNewNote();
       });
 
-      this.loadBitacoraNotes();
+      this.loadBitacoraNotes({ populateFirmantes: true });
     },
 
-    async loadBitacoraNotes() {
+    populateFirmanteOptions(notes) {
+      const select = document.getElementById('s-firmante');
+      if (!select) return;
+      const firmantes = new Map();
+      notes.forEach(n => {
+        if (n.creado_por_id && !firmantes.has(n.creado_por_id)) {
+          firmantes.set(n.creado_por_id, n.creado_por_nombre);
+        }
+      });
+      const current = select.value;
+      select.innerHTML = '<option value="">Todos</option>' +
+        [...firmantes.entries()].map(([id, nombre]) => `<option value="${id}">${nombre}</option>`).join('');
+      select.value = current;
+    },
+
+    async loadBitacoraNotes(opts = {}) {
       const list = document.getElementById('bitacora-notes-list');
       if (!list) return;
 
       const tipo = document.getElementById('s-tipo').value;
       const f_inicio = document.getElementById('s-f-inicio').value;
+      const f_fin = document.getElementById('s-f-fin').value;
+      const firmante = document.getElementById('s-firmante').value;
+      const vinculo = document.getElementById('s-vinculo').value;
       const query = document.getElementById('s-query').value;
 
-      let url = `/api/contratos/${this.state.currentContractId}/bitacora/notas?`;
-      if (tipo) url += `tipo=${tipo}&`;
-      if (f_inicio) url += `f_inicio=${f_inicio}&`;
-      if (query) url += `query=${encodeURIComponent(query)}&`;
+      const params = new URLSearchParams();
+      if (tipo) params.set('tipo', tipo);
+      if (f_inicio) params.set('f_inicio', f_inicio);
+      if (f_fin) params.set('f_fin', f_fin);
+      if (firmante) params.set('creador_id', firmante);
+      if (vinculo) params.set('vinculo', vinculo);
+      if (query) params.set('query', query);
 
       try {
-        const notes = await this.api(url);
+        const notes = await this.api(`/api/contratos/${this.state.currentContractId}/bitacora/notas?${params.toString()}`);
+
+        if (opts.populateFirmantes) {
+          this.populateFirmanteOptions(notes);
+        }
 
         let html = '';
         if (notes.length === 0) {
@@ -220,6 +259,14 @@
             No se encontraron notas en la bitacora.
           </div>`;
         } else {
+          html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <label style="font-size:12.5px; display:flex; align-items:center; gap:6px; color:var(--text-muted); cursor:pointer;">
+                <input type="checkbox" id="bit-select-all"> Seleccionar todas
+              </label>
+              <span style="font-size:12px; color:var(--text-muted);">${notes.length} nota(s) encontradas</span>
+            </div>
+          `;
           notes.forEach(n => {
             let linkBadge = '';
             if (n.vinculo_nota_id) {
@@ -229,7 +276,8 @@
             html += `
               <div class="glass-panel" style="margin-bottom: 16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px;">
-                  <div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" class="bit-note-checkbox" value="${n.id}">
                     <span class="user-badge" style="background: var(--primary); font-weight:700; color:white; border:none;">Nota #${n.folio}</span>
                     <span class="user-badge" style="text-transform: capitalize; background:#f1f5f9; color:#475569; border:none;">${n.tipo}</span>
                     ${linkBadge}
@@ -249,6 +297,13 @@
           });
         }
         list.innerHTML = html;
+
+        const selectAll = document.getElementById('bit-select-all');
+        if (selectAll) {
+          selectAll.addEventListener('change', () => {
+            document.querySelectorAll('.bit-note-checkbox').forEach(cb => { cb.checked = selectAll.checked; });
+          });
+        }
       } catch (e) {}
     },
 
@@ -274,8 +329,20 @@
       } catch (err) {}
     },
 
-    async exportBitacoraExcel() {
-      this.showToast('Exportacion Excel generada con exito.', 'success');
+    exportBitacoraExcel() {
+      const checked = [...document.querySelectorAll('.bit-note-checkbox:checked')].map(cb => cb.value);
+      if (checked.length === 0) {
+        this.showToast('Selecciona al menos una nota para exportar', 'info');
+        return;
+      }
+
+      const url = `/api/contratos/${this.state.currentContractId}/bitacora/notas/export?ids=${encodeURIComponent(checked.join(','))}`;
+      const link = document.createElement('a');
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast(`Exportando ${checked.length} nota(s) a Excel`, 'success');
     }
   };
 })();

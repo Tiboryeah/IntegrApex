@@ -30,7 +30,7 @@ Leyenda: **Cumple** (los 3 criterios se satisfacen), **Cumple con matices** (fun
 | HU-07 Alertas de atraso por concepto | Cumple con matices | Crear/pausar/eliminar sin afectar otras: sí. El umbral se respeta. **"La alerta dispara" hoy es un badge que se recalcula al abrir la pestaña, no un evento real** — solo se inserta una notificación en el momento de crear/editar la alerta, no cada vez que el avance cruza el umbral. No hay verificación periódica (cron/poller) que dispare la notificación cuando realmente ocurre el atraso. |
 | HU-08 Apertura formal de bitácora | Cumple | Bitácora única, firmantes tomados del equipo del contrato (no texto libre), firma completa cuando firman todos, primera nota con los datos obligatorios. |
 | HU-09 Notas tipificadas con firma | Cumple con matices | Tipos por rol, folio correlativo, firma (hash) desde la cuenta propia, vínculo opcional a nota previa, no hay endpoint de edición/borrado (inmutable de facto). **El formato "dice / debe decir" no es un campo estructurado**: el vínculo a la nota previa existe, pero el usuario tiene que escribir "dice/debe decir" a mano en el contenido libre; no hay una plantilla dedicada. |
-| HU-10 Consulta y búsqueda de notas | **Parcial** | Filtra por tipo, fecha inicio, fecha fin y palabra clave con AND — pero **el filtro por firmante y por vínculo no están expuestos en la UI** (el backend sí acepta `creador_id` pero el formulario no tiene ese campo; no existe filtro por `vinculo_nota_id` ni en backend ni en frontend). **La exportación a Excel es un stub que no exporta nada**: `exportBitacoraExcel()` solo muestra un toast de éxito, no genera archivo, y no hay forma de seleccionar varias notas (no hay checkboxes). Es el hueco más concreto de todo el sistema. |
+| HU-10 Consulta y búsqueda de notas | **Cumple** | Filtra con AND por tipo, fecha inicio, fecha fin, **firmante** (select poblado con los autores reales de la bitácora) y **vínculo** (por folio), todos combinables. Cada nota tiene checkbox de selección + "Seleccionar todas"; **"Exportar selección" genera un .xlsx real** (vía `exceljs`, endpoint `GET /contratos/:id/bitacora/notas/export?ids=...`) — verificado que el archivo descargado es un ZIP/XLSX válido (firma `PK`), no un CSV disfrazado. Utilidad reutilizable en `backend/src/utils/xlsxExport.js` para futuras exportaciones (HU-19). |
 | HU-11 Minutas, visitas y acuerdos | **Parcial** | Minutas y visitas se ven en la pestaña Documentos. **Falta el filtro por periodo** (hoy se listan todas, sin filtro de fecha/periodo ni en backend ni en frontend). **Falta la posibilidad de adjuntar una minuta o visita como referencia en una nota de bitácora** — el modelo de nota solo soporta `vinculo_nota_id` (a otra nota), no `minuta_id`/`visita_id`. |
 
 ## Estimaciones
@@ -51,9 +51,9 @@ Leyenda: **Cumple** (los 3 criterios se satisfacen), **Cumple con matices** (fun
 ## Resumen priorizado para la siguiente vuelta
 
 1. ~~Bug real: HU-15 permitía que residencia resolviera sin que supervisión hubiera turnado~~ — **corregido y verificado.**
-2. **HU-10 es el hueco más visible**: la exportación a Excel no exporta nada (stub falso) y faltan dos filtros que el criterio pide explícitamente.
-3. **HU-17 tiene el backend listo pero cero pantalla**: es la ganancia más barata (conectar un endpoint que ya funciona).
-4. **HU-19 necesita XLSX/PDF real** (hoy todo es CSV) — requiere agregar una librería (ej. `exceljs` para Excel, `pdfkit` para PDF) siguiendo el patrón modular ya establecido (un módulo de generación de reportes en `backend/src/utils/`, no meter la lógica dentro de las rutas).
+2. ~~HU-10: exportación a Excel falsa y filtros por firmante/vínculo faltantes~~ — **corregido y verificado** (exportación real a `.xlsx` con `exceljs`, filtros completos con AND).
+3. **HU-17 tiene el backend listo pero cero pantalla**: es la ganancia más barata (conectar un endpoint que ya funciona). Siguiente candidato natural.
+4. **HU-19 necesita XLSX/PDF real** (hoy todo es CSV) — ya existe `backend/src/utils/xlsxExport.js` (creado para HU-10) reutilizable para Excel; falta agregar `pdfkit` para los reportes que piden PDF.
 5. **HU-12, HU-13, HU-16, HU-18, HU-20** comparten el mismo patrón: la mecánica central (cálculos, bloqueos) ya funciona, pero falta la capa de evidencias/soportes/semáforos/plazos legales alrededor.
 
 ## Estado general

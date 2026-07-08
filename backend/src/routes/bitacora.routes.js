@@ -3,6 +3,7 @@ const crypto = require('crypto');
 
 const store = require('../db/store');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
+const { buildWorkbookBuffer, sendXlsx } = require('../utils/xlsxExport');
 
 const router = express.Router();
 
@@ -154,13 +155,14 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
 // HU-10: Busqueda y consulta de notas
 router.get('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   const contrato_id = req.params.id;
-  const { tipo, f_inicio, f_fin, creador_id, query } = req.query;
+  const { tipo, f_inicio, f_fin, creador_id, vinculo, query } = req.query;
 
   const notes = store.find('notas', n => n.contrato_id === contrato_id);
 
   const filtered = notes.filter(n => {
     if (tipo && n.tipo !== tipo) return false;
     if (creador_id && n.creado_por_id !== creador_id) return false;
+    if (vinculo && String(n.vinculo_nota_id || '') !== String(vinculo)) return false;
 
     if (f_inicio) {
       if (new Date(n.fecha) < new Date(f_inicio)) return false;
@@ -183,6 +185,47 @@ router.get('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   });
 
   return res.json(filtered.sort((a, b) => a.folio - b.folio));
+});
+
+// HU-10: Exportar seleccion de notas a Excel
+router.get('/contratos/:id/bitacora/notas/export', authenticate, async (req, res, next) => {
+  try {
+    const contrato_id = req.params.id;
+    const idsParam = req.query.ids;
+
+    let notes = store.find('notas', n => n.contrato_id === contrato_id);
+    if (idsParam) {
+      const idSet = new Set(String(idsParam).split(',').filter(Boolean));
+      notes = notes.filter(n => idSet.has(n.id));
+    }
+    notes = notes.sort((a, b) => a.folio - b.folio);
+
+    const columns = [
+      { header: 'Folio', key: 'folio', width: 10 },
+      { header: 'Tipo', key: 'tipo', width: 16 },
+      { header: 'Fecha', key: 'fecha', width: 22 },
+      { header: 'Emitido por', key: 'emitido_por', width: 26 },
+      { header: 'Rol', key: 'rol', width: 14 },
+      { header: 'Vinculo (folio)', key: 'vinculo', width: 16 },
+      { header: 'Contenido', key: 'contenido', width: 60 },
+      { header: 'Firma (hash)', key: 'firma', width: 20 }
+    ];
+    const rows = notes.map(n => ({
+      folio: n.folio,
+      tipo: n.tipo,
+      fecha: n.fecha ? new Date(n.fecha).toLocaleString('es-MX') : '',
+      emitido_por: n.creado_por_nombre,
+      rol: n.creado_por_rol,
+      vinculo: n.vinculo_nota_id || '',
+      contenido: n.contenido,
+      firma: n.firma_hash ? n.firma_hash.substring(0, 16) : ''
+    }));
+
+    const buffer = await buildWorkbookBuffer('Bitacora', columns, rows);
+    return sendXlsx(res, `Bitacora_${contrato_id}.xlsx`, buffer);
+  } catch (e) {
+    return next(e);
+  }
 });
 
 module.exports = router;
