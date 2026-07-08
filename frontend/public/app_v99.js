@@ -285,7 +285,7 @@ const app = {
     html += `
       <div style="flex-grow: 1;"></div>
       <a class="sidebar-menu-item" onclick="app.logout()" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fca5a5;">
-        <span class="item-left"><span class="material-icons-round">logout</span><span>Cambiar de rol</span></span>
+        <span class="item-left"><span class="material-icons-round">logout</span><span>Cerrar sesion</span></span>
       </a>
     `;
 
