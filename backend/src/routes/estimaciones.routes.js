@@ -147,8 +147,8 @@ router.post('/estimaciones/:id/resolver', authenticate, authorizeRoles('resident
     return res.status(404).json({ error: "Estimacion no encontrada" });
   }
 
-  if (est.estado !== 'en_revision' && est.estado !== 'presentada') {
-    return res.status(400).json({ error: "La estimacion debe estar en revision primero." });
+  if (est.estado !== 'en_revision') {
+    return res.status(400).json({ error: "La estimacion debe ser turnada por supervision (HU-15) antes de que residencia pueda resolverla." });
   }
 
   const finalState = resolucion === 'autorizada' ? 'autorizada' : 'rechazada';

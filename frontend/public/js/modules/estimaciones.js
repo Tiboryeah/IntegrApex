@@ -203,7 +203,16 @@
           `;
         }
 
-        if (this.state.user.rol === 'residente' && (data.estado === 'en_revision' || data.estado === 'presentada')) {
+        if (this.state.user.rol === 'residente' && data.estado === 'presentada') {
+          actionPanel += `
+            <div class="glass-panel" style="margin-top:20px;">
+              <h3>Autorizacion del Residente de Obra (HU-15)</h3>
+              <p style="font-size:13px; color:var(--text-muted);">Esta estimacion todavia no ha sido turnada por Supervision. La residencia no puede autorizar ni rechazar hasta que Supervision la revise y la turne.</p>
+            </div>
+          `;
+        }
+
+        if (this.state.user.rol === 'residente' && data.estado === 'en_revision') {
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
               <h3>Autorizacion del Residente de Obra (HU-15)</h3>
