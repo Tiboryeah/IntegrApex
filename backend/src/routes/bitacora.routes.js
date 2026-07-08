@@ -108,7 +108,7 @@ router.post('/bitacora/:id/firmar', authenticate, (req, res) => {
 // HU-09: Emision y respuesta de notas
 router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   const contrato_id = req.params.id;
-  const { tipo, contenido, vinculo_nota_id } = req.body;
+  const { tipo, contenido, vinculo_nota_id, referencia_tipo, referencia_id } = req.body;
   const user = req.user;
 
   if (!tipo || !contenido) {
@@ -131,6 +131,19 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
     return res.status(403).json({ error: `Tu rol no tiene permitido emitir notas del tipo ${tipo}. Permitidos: ${allowedTypes.join(', ')}` });
   }
 
+  let referenciaValida = null;
+  if (referencia_tipo && referencia_id) {
+    if (!['minuta', 'visita'].includes(referencia_tipo)) {
+      return res.status(400).json({ error: "Tipo de referencia invalido" });
+    }
+    const coleccion = referencia_tipo === 'minuta' ? 'minutas' : 'visitas';
+    const referenciado = store.findOne(coleccion, r => r.id === referencia_id && r.contrato_id === contrato_id);
+    if (!referenciado) {
+      return res.status(400).json({ error: `La ${referencia_tipo} referenciada no existe para este contrato` });
+    }
+    referenciaValida = { referencia_tipo, referencia_id };
+  }
+
   const contractNotes = store.find('notas', n => n.contrato_id === contrato_id);
   const nextFolio = contractNotes.reduce((max, n) => Math.max(max, n.folio), 0) + 1;
 
@@ -146,7 +159,9 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
     creado_por_rol: user.rol,
     fecha: new Date().toISOString(),
     firma_hash: signatureHash,
-    vinculo_nota_id: vinculo_nota_id || null
+    vinculo_nota_id: vinculo_nota_id || null,
+    referencia_tipo: referenciaValida ? referenciaValida.referencia_tipo : null,
+    referencia_id: referenciaValida ? referenciaValida.referencia_id : null
   });
 
   return res.status(201).json({ message: "Nota emitida y firmada digitalmente", nota: newNote });

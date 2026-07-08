@@ -3,6 +3,8 @@ const express = require('express');
 const store = require('../db/store');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
+const { buildWorkbookBuffer, sendXlsx } = require('../utils/xlsxExport');
+const { buildTablePdfBuffer, sendPdf } = require('../utils/pdfExport');
 
 const router = express.Router();
 
@@ -112,9 +114,12 @@ router.post('/estimaciones/:id/enviar', authenticate, authorizeRoles('contratist
   return res.json({ message: "Estimacion enviada formalmente a revision.", fecha_presentacion: now.toISOString() });
 });
 
-// GET estimations
+// HU-14: Historial de estimaciones con filtros por periodo y estado (AND)
 router.get('/contratos/:id/estimaciones', authenticate, (req, res) => {
-  const list = store.find('estimaciones', e => e.contrato_id === req.params.id);
+  const { periodo, estado } = req.query;
+  let list = store.find('estimaciones', e => e.contrato_id === req.params.id);
+  if (periodo) list = list.filter(e => String(e.periodo_numero) === String(periodo));
+  if (estado) list = list.filter(e => e.estado === estado);
   return res.json(list.sort((a, b) => a.periodo_numero - b.periodo_numero));
 });
 
@@ -210,6 +215,41 @@ router.post('/estimaciones/:id/reingresar', authenticate, authorizeRoles('contra
   });
 
   return res.status(201).json({ message: "Nueva versin de estimacion integrada (reingreso)", estimacion: newEst });
+});
+
+// HU-16: Descargar las observaciones de una estimacion (tipicamente la version rechazada)
+router.get('/estimaciones/:id/observaciones/export', authenticate, async (req, res, next) => {
+  try {
+    const est = store.findOne('estimaciones', e => e.id === req.params.id);
+    if (!est) return res.status(404).json({ error: "Estimacion no encontrada" });
+
+    const contract = store.findOne('contratos', c => c.id === est.contrato_id);
+    const observaciones = est.observaciones || [];
+
+    const columns = [
+      { header: '#', key: 'num', width: 6 },
+      { header: 'Observacion', key: 'comentario', width: 70 }
+    ];
+    const rows = observaciones.map((o, idx) => ({ num: idx + 1, comentario: o.comentario || '' }));
+
+    const title = `Observaciones - Periodo #${est.periodo_numero} (${est.estado})`;
+    const subtitle = [
+      contract ? `Contrato: ${contract.folio}` : null,
+      est.fecha_revision_supervision ? `Revisado: ${new Date(est.fecha_revision_supervision).toLocaleString('es-MX')}` : null,
+      est.comentario_residencia ? `Resolucion de residencia: ${est.comentario_residencia}` : null
+    ].filter(Boolean).join(' | ');
+
+    const { formato } = req.query;
+    if (formato === 'pdf') {
+      const buffer = await buildTablePdfBuffer(title, subtitle, columns, rows);
+      return sendPdf(res, `observaciones_${est.id}.pdf`, buffer);
+    }
+
+    const buffer = await buildWorkbookBuffer('Observaciones', columns, rows);
+    return sendXlsx(res, `observaciones_${est.id}.xlsx`, buffer);
+  } catch (e) {
+    return next(e);
+  }
 });
 
 module.exports = router;

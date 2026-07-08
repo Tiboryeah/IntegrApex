@@ -3,11 +3,20 @@
 
   window.IntegrApexModules.documentos = {
     renderDocumentosTab(contract, outlet) {
+      const filterPeriodo = this.state.documentosFilterPeriodo || '';
+      const matchesPeriodo = fecha => {
+        if (!filterPeriodo) return true;
+        return String(fecha || '').startsWith(filterPeriodo);
+      };
+
+      const minutas = (contract.minutas || []).filter(m => matchesPeriodo(m.fecha_reunion));
+      const visitas = (contract.visitas || []).filter(v => matchesPeriodo(v.fecha_visita));
+
       let minList = '';
-      if (contract.minutas.length === 0) {
-        minList = `<div style="text-align: center; color: var(--text-muted); padding:20px;">No hay minutas registradas</div>`;
+      if (minutas.length === 0) {
+        minList = `<div style="text-align: center; color: var(--text-muted); padding:20px;">No hay minutas registradas para el periodo seleccionado</div>`;
       } else {
-        contract.minutas.forEach(m => {
+        minutas.forEach(m => {
           minList += `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid var(--border-color);">
               <div>
@@ -21,10 +30,10 @@
       }
 
       let visList = '';
-      if (contract.visitas.length === 0) {
-        visList = `<div style="text-align: center; color: var(--text-muted); padding:20px;">No hay visitas programadas</div>`;
+      if (visitas.length === 0) {
+        visList = `<div style="text-align: center; color: var(--text-muted); padding:20px;">No hay visitas programadas para el periodo seleccionado</div>`;
       } else {
-        contract.visitas.forEach(v => {
+        visitas.forEach(v => {
           visList += `
             <div style="padding:12px; border-bottom:1px solid var(--border-color);">
               <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -49,6 +58,17 @@
 
       outlet.innerHTML = `
         <div class="dashboard-grid">
+          <div class="col-12 glass-panel">
+            <h2>Filtro por Periodo (HU-11)</h2>
+            <form id="doc-filtro-periodo-form" style="display:flex; align-items:flex-end; gap:10px; margin-top:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Mes</label>
+                <input type="month" id="doc-filtro-periodo" value="${filterPeriodo}">
+              </div>
+              <button type="submit" class="btn btn-primary">Filtrar</button>
+              <button type="button" class="btn btn-secondary" onclick="app.limpiarFiltroDocumentos()">Ver todo</button>
+            </form>
+          </div>
           <div class="col-6 glass-panel">
             <h2>Minutas y Acuerdos (HU-11)</h2>
             <div style="margin-top:16px;">
@@ -68,6 +88,17 @@
           </div>
         </div>
       `;
+
+      document.getElementById('doc-filtro-periodo-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.state.documentosFilterPeriodo = document.getElementById('doc-filtro-periodo').value;
+        this.renderDocumentosTab(contract, outlet);
+      });
+    },
+
+    limpiarFiltroDocumentos() {
+      this.state.documentosFilterPeriodo = '';
+      this.renderActiveTabContent();
     },
 
     registrarMinutaDialog() {

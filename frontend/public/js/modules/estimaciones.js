@@ -135,7 +135,12 @@
 
       try {
         const contract = this.state.currentContractData;
-        const ests = await this.api(`/api/contratos/${id}/estimaciones`);
+        const filterPeriodo = this.state.estimacionesFilterPeriodo || '';
+        const filterEstado = this.state.estimacionesFilterEstado || '';
+        const params = new URLSearchParams();
+        if (filterPeriodo) params.set('periodo', filterPeriodo);
+        if (filterEstado) params.set('estado', filterEstado);
+        const ests = await this.api(`/api/contratos/${id}/estimaciones?${params.toString()}`);
 
         let rows = '';
         if (ests.length === 0) {
@@ -188,6 +193,30 @@
             </div>
 
             <div class="glass-panel">
+              <h2>Historial de Estimaciones (HU-14)</h2>
+              <form id="est-historial-filtros" class="dashboard-grid" style="gap:12px; margin-top:12px; margin-bottom:16px;">
+                <div class="col-3 form-group" style="margin-bottom:0;">
+                  <label>Periodo</label>
+                  <input type="number" id="est-filtro-periodo" placeholder="Ej. 3" value="${filterPeriodo}">
+                </div>
+                <div class="col-4 form-group" style="margin-bottom:0;">
+                  <label>Estado</label>
+                  <select id="est-filtro-estado">
+                    <option value="">Todos</option>
+                    <option value="borrador" ${filterEstado === 'borrador' ? 'selected' : ''}>Borrador</option>
+                    <option value="presentada" ${filterEstado === 'presentada' ? 'selected' : ''}>Presentada</option>
+                    <option value="en_revision" ${filterEstado === 'en_revision' ? 'selected' : ''}>En revision</option>
+                    <option value="autorizada" ${filterEstado === 'autorizada' ? 'selected' : ''}>Autorizada</option>
+                    <option value="rechazada" ${filterEstado === 'rechazada' ? 'selected' : ''}>Rechazada</option>
+                    <option value="en_pago" ${filterEstado === 'en_pago' ? 'selected' : ''}>En pago</option>
+                    <option value="pagada" ${filterEstado === 'pagada' ? 'selected' : ''}>Pagada</option>
+                  </select>
+                </div>
+                <div class="col-5" style="display:flex; align-items:flex-end; gap:8px;">
+                  <button type="submit" class="btn btn-primary">Filtrar</button>
+                  <button type="button" class="btn btn-secondary" onclick="app.limpiarFiltrosEstimaciones()">Limpiar</button>
+                </div>
+              </form>
               <div class="table-container">
                 <table>
                   <thead>
@@ -208,7 +237,20 @@
             </div>
           </div>
         `;
+
+        document.getElementById('est-historial-filtros').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.state.estimacionesFilterPeriodo = document.getElementById('est-filtro-periodo').value;
+          this.state.estimacionesFilterEstado = document.getElementById('est-filtro-estado').value;
+          this.renderEstimacionesScreen();
+        });
       } catch(e) {}
+    },
+
+    limpiarFiltrosEstimaciones() {
+      this.state.estimacionesFilterPeriodo = '';
+      this.state.estimacionesFilterEstado = '';
+      this.renderEstimacionesScreen();
     },
 
     integrarEstimacionForm() {
@@ -349,12 +391,28 @@
           `;
         }
 
-        if (this.state.user.rol === 'contratista' && data.estado === 'rechazada') {
+        if (data.estado === 'rechazada') {
+          const observacionesList = (data.observaciones || []).length
+            ? `<ul style="margin:12px 0; padding-left:18px; font-size:13px; color:#334155; line-height:1.6;">${(data.observaciones || []).map(o => `<li>${o.comentario || ''}</li>`).join('')}</ul>`
+            : `<p style="font-size:13px; color:var(--text-muted); margin-top:12px;">No se registraron observaciones detalladas.</p>`;
+          const reingresarBtn = this.state.user.rol === 'contratista'
+            ? `<button class="btn btn-primary" onclick="app.reingresarEstimacionForm('${data.id}')">Reingresar Nueva Version</button>`
+            : '';
+
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
-              <h3>Estimacion Rechazada - Reingresar Versin (HU-16)</h3>
-              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Cargue un bloque de reingreso corrigiendo observaciones tecnicas.</p>
-              <button class="btn btn-primary" onclick="app.reingresarEstimacionForm('${data.id}')">Reingresar Nueva Versin</button>
+              <h3>Estimacion Rechazada - Observaciones (HU-16)</h3>
+              <p style="margin-bottom:0; font-size:13px; color:var(--text-muted);">${data.comentario_residencia ? `Resolucion de residencia: ${data.comentario_residencia}` : 'Atienda las observaciones tecnicas antes de reingresar.'}</p>
+              ${observacionesList}
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                ${reingresarBtn}
+                <button class="btn btn-secondary" onclick="app.descargarObservaciones('${data.id}', 'xlsx')">
+                  <span class="material-icons-round" style="font-size:16px;">download</span> Excel
+                </button>
+                <button class="btn btn-secondary" onclick="app.descargarObservaciones('${data.id}', 'pdf')">
+                  <span class="material-icons-round" style="font-size:16px;">download</span> PDF
+                </button>
+              </div>
             </div>
           `;
         }
@@ -597,6 +655,16 @@
           this.viewEstimacionDetail(estId);
         } catch(err) {}
       });
+    },
+
+    descargarObservaciones(estId, formato) {
+      const url = `/api/estimaciones/${estId}/observaciones/export?formato=${formato}`;
+      const link = document.createElement('a');
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast(`Generando observaciones en ${formato === 'pdf' ? 'PDF' : 'Excel'}...`, 'success');
     },
 
     reingresarEstimacionForm(estId) {

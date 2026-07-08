@@ -164,6 +164,18 @@
                 <input type="number" id="n-vinculo" placeholder="Opcional">
               </div>
               <div class="form-group">
+                <label>Referencia (Minuta / Visita, HU-11)</label>
+                <select id="n-referencia">
+                  <option value="">Ninguna</option>
+                  <optgroup label="Minutas">
+                    ${(contract.minutas || []).map(m => `<option value="minuta:${m.id}">${m.descripcion} (${m.fecha_reunion})</option>`).join('')}
+                  </optgroup>
+                  <optgroup label="Visitas">
+                    ${(contract.visitas || []).map(v => `<option value="visita:${v.id}">${v.descripcion} (${v.fecha_visita})</option>`).join('')}
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-group">
                 <label>Contenido</label>
                 <textarea id="n-contenido" rows="5" placeholder="Asiente hechos..." required></textarea>
               </div>
@@ -272,6 +284,10 @@
             if (n.vinculo_nota_id) {
               linkBadge = `<span class="user-badge" style="background: #fffbeb; color:#92400e; border:none; margin: 0; font-size:10px;">Vnculo: Nota #${n.vinculo_nota_id}</span>`;
             }
+            let referenciaBadge = '';
+            if (n.referencia_tipo && n.referencia_id) {
+              referenciaBadge = `<span class="user-badge" style="background: #eff6ff; color:#1d4ed8; border:none; margin: 0; font-size:10px; text-transform:capitalize;">${n.referencia_tipo} adjunta</span>`;
+            }
 
             html += `
               <div class="glass-panel" style="margin-bottom: 16px;">
@@ -281,6 +297,7 @@
                     <span class="user-badge" style="background: var(--primary); font-weight:700; color:white; border:none;">Nota #${n.folio}</span>
                     <span class="user-badge" style="text-transform: capitalize; background:#f1f5f9; color:#475569; border:none;">${n.tipo}</span>
                     ${linkBadge}
+                    ${referenciaBadge}
                   </div>
                   <div style="font-size:11.5px; color:var(--text-muted);">
                     ${new Date(n.fecha).toLocaleString()}
@@ -311,6 +328,8 @@
       const tipo = document.getElementById('n-tipo').value;
       const vinculo = document.getElementById('n-vinculo').value;
       const contenido = document.getElementById('n-contenido').value;
+      const referencia = document.getElementById('n-referencia').value;
+      const [referencia_tipo, referencia_id] = referencia ? referencia.split(':') : [null, null];
 
       try {
         await this.api(`/api/contratos/${this.state.currentContractId}/bitacora/notas`, {
@@ -319,12 +338,15 @@
           body: JSON.stringify({
             tipo,
             contenido,
-            vinculo_nota_id: vinculo ? parseInt(vinculo) : null
+            vinculo_nota_id: vinculo ? parseInt(vinculo) : null,
+            referencia_tipo,
+            referencia_id
           })
         });
         this.showToast('Nota registrada y firmada electrunicamente', 'success');
         document.getElementById('n-contenido').value = '';
         document.getElementById('n-vinculo').value = '';
+        document.getElementById('n-referencia').value = '';
         this.loadBitacoraNotes();
       } catch (err) {}
     },
