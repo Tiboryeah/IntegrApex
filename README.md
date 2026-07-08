@@ -50,25 +50,52 @@ La trazabilidad frente a `Historias_Usuario.xlsx` esta en [MATRIZ_CUMPLIMIENTO_H
 
 ```text
 backend/
-  server.js
+  server.js               # composicion de Express: middlewares, routers, catch-all
   src/db/store.js
-  src/middleware/auth.js
+  src/middleware/
+    auth.js
+    upload.js              # config de multer
+    errorHandler.js        # middleware final de errores -> JSON
+  src/utils/validators.js  # helpers de validacion compartidos
+  src/routes/
+    index.js                # agrega todos los routers de dominio
+    auth.routes.js
+    contratos.routes.js
+    fianzas.routes.js
+    convenios.routes.js
+    bitacora.routes.js
+    minutasVisitas.routes.js
+    trabajosPeriodo.routes.js
+    estimaciones.routes.js
+    tableros.routes.js
+    pagos.routes.js
+    alertas.routes.js
 frontend/public/
   index.html
   style.css
-  app_v99.js
+  app_v99.js               # core: estado, api(), router SPA, sidebar, dashboards, shell de contrato, modal/toast
   js/modules/
-data/db.json
+    contratos.js            # HU-01 alta de contrato
+    expediente.js           # HU-04 pestanas config/catalogo, buscador, exportacion CSV
+    fianzas.js               # HU-02
+    convenios.js             # HU-03
+    documentos.js            # HU-11 minutas/visitas
+    bitacora.js               # HU-08, HU-09, HU-10, bandeja Por Firmar
+    estimaciones.js           # HU-12 a HU-21
+    programa.js                # HU-05, HU-06, HU-07: curva S, Gantt, trabajos por periodo, alertas
+backend/data/db.json
 Historias_Usuario.xlsx
 ```
 
 ## Convencion De Frontend
 
-El archivo `app_v99.js` queda como contenedor de arranque, navegacion y compatibilidad. La funcionalidad nueva o de alto volumen debe ir en `frontend/public/js/modules/` y registrarse en `window.IntegrApexModules` para evitar seguir creciendo el archivo principal.
+El archivo `app_v99.js` es el nucleo: estado, wrapper `api()`, router SPA (`navigate`), sidebar, login/registro, dashboards de listado, el shell de `renderContractDetail` (pestanas + outlet) y utilidades de modal/toast. Toda funcionalidad especifica de una HU vive en `frontend/public/js/modules/`, registrada como un objeto de metodos en `window.IntegrApexModules.<nombre>` y mezclada en `app` via `Object.assign` al cargar `app_v99.js` (ultimo script en `index.html`).
 
-Modulo extraido actualmente:
+Las pestanas del expediente de contrato (`config`, `catalogo`, `programa`, `fianzas`, `documentos`, `bitacora`, `convenios`) se renderizan por delegacion: `renderActiveTabContent` en `app_v99.js` solo despacha a un metodo `render<Tab>Tab(contract, outlet)` que aporta el modulo correspondiente de la tabla de arriba.
 
-- `js/modules/programa.js`: HU-05, HU-06 y HU-07, incluyendo curva S, Gantt, trabajos terminados por periodo y alertas por concepto.
+## Convencion De Backend
+
+`server.js` unicamente arma la app de Express (middlewares, archivos estaticos, montaje de `src/routes`, catch-all SPA y manejador de errores). Cada dominio de negocio (auth, contratos, fianzas, convenios, bitacora, minutas/visitas, trabajos por periodo, estimaciones, tableros, pagos, alertas) tiene su propio router en `src/routes/*.routes.js`, montado una sola vez desde `src/routes/index.js`. Los helpers puros (validaciones, calculos) viven en `src/utils/` para poder reutilizarse y probarse por separado del transporte HTTP.
 
 ## Verificacion Recomendada
 
