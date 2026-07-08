@@ -226,7 +226,7 @@
           `;
         }
 
-        if (data.estado === 'autorizada') {
+        if ((this.state.user.rol === 'contratista' || this.state.user.rol === 'finanzas') && data.estado === 'autorizada') {
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
               <h3>Transito a Pago y Suficiencia Presupuestal (HU-20)</h3>

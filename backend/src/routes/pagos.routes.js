@@ -7,7 +7,7 @@ const { upload } = require('../middleware/upload');
 const router = express.Router();
 
 // HU-20: Transito a pago - suficiencia presupuestal
-router.post('/estimaciones/:id/presupuesto', authenticate, (req, res) => {
+router.post('/estimaciones/:id/presupuesto', authenticate, authorizeRoles('contratista', 'finanzas'), (req, res) => {
   const est_id = req.params.id;
   const est = store.findOne('estimaciones', e => e.id === est_id);
   if (!est) return res.status(404).json({ error: "Estimacion no encontrada" });
@@ -28,7 +28,7 @@ router.post('/estimaciones/:id/presupuesto', authenticate, (req, res) => {
 });
 
 // HU-20: Cargar soportes y generar instruccion
-router.post('/estimaciones/:id/instruccion-pago', authenticate, upload.fields([
+router.post('/estimaciones/:id/instruccion-pago', authenticate, authorizeRoles('contratista', 'finanzas'), upload.fields([
   { name: 'factura', maxCount: 1 },
   { name: 'cfdi', maxCount: 1 }
 ]), (req, res) => {

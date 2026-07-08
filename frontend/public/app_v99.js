@@ -173,7 +173,7 @@ const app = {
           <span class="item-left"><span class="material-icons-round">verified_user</span><span>Fianzas / garantias</span></span>
           <span class="hu-tag">HU-02</span>
         </a>
-        <a class="sidebar-menu-item" onclick="app.showToast('Modulo en solo lectura', 'info')">
+        <a class="sidebar-menu-item" onclick="app.openEstimacionesModule()">
           <span class="item-left"><span class="material-icons-round">query_stats</span><span>Ciclo de estimacion</span></span>
           <span class="hu-tag">HU 12-15</span>
         </a>
@@ -205,7 +205,7 @@ const app = {
           <span class="item-left"><span class="material-icons-round">post_add</span><span>Alta de contratos</span></span>
           <span class="hu-tag">HU-01</span>
         </a>
-        <a class="sidebar-menu-item" onclick="app.openContractModule('estimaciones')">
+        <a class="sidebar-menu-item" onclick="app.openEstimacionesModule()">
           <span class="item-left"><span class="material-icons-round">query_stats</span><span>Ciclo de estimacion</span></span>
           <span class="hu-tag">HU 12-15</span>
         </a>
@@ -217,7 +217,7 @@ const app = {
           <span class="item-left"><span class="material-icons-round">insights</span><span>Avance y seguimiento</span></span>
           <span class="hu-tag">HU 05-07</span>
         </a>
-        <a class="sidebar-menu-item" onclick="app.openContractModule('estimaciones')">
+        <a class="sidebar-menu-item" onclick="app.openEstimacionesModule()">
           <span class="item-left"><span class="material-icons-round">payment</span><span>Pago y transito</span></span>
           <span class="hu-tag">HU 20-21</span>
         </a>
@@ -237,14 +237,6 @@ const app = {
           <span class="item-left"><span class="material-icons-round">verified_user</span><span>Fianzas / garantias</span></span>
           <span class="hu-tag">HU-02</span>
         </a>
-        <a class="sidebar-menu-item" onclick="app.openContractModule('estimaciones')">
-          <span class="item-left"><span class="material-icons-round">task</span><span>Revision / autorizacion</span></span>
-          <span class="hu-tag">HU-15</span>
-        </a>
-        <a class="sidebar-menu-item" onclick="app.openContractModule('programa')">
-          <span class="item-left"><span class="material-icons-round">insights</span><span>Curva de avance</span></span>
-          <span class="hu-tag">HU-05</span>
-        </a>
         <a class="sidebar-menu-item readonly">
           <span class="item-left"><span class="material-icons-round">payment</span><span>Pago y transito</span></span>
           <span class="hu-tag">HU 20-21</span>
@@ -257,7 +249,7 @@ const app = {
     }
     else if (rol === 'finanzas') {
       html += `
-        <a class="sidebar-menu-item" onclick="app.openContractModule('estimaciones')">
+        <a class="sidebar-menu-item" onclick="app.openEstimacionesModule()">
           <span class="item-left"><span class="material-icons-round">payment</span><span>Registro de Pagos</span></span>
           <span class="hu-tag">HU-21</span>
         </a>
@@ -304,6 +296,18 @@ const app = {
     if (this.state.currentContractId) {
       this.state.activeTab = tabName;
       this.navigate('contract-detail', { id: this.state.currentContractId });
+    } else {
+      this.showToast('Seleccione un contrato primero', 'info');
+      this.navigate('contracts-dashboard');
+    }
+  },
+
+  // "Estimaciones" is a full-screen view (renderEstimacionesScreen), not a contract-detail
+  // tab, so it needs its own entry point instead of openContractModule('estimaciones').
+  async openEstimacionesModule() {
+    if (this.state.currentContractId) {
+      await this.navigate('contract-detail', { id: this.state.currentContractId });
+      this.renderEstimacionesScreen();
     } else {
       this.showToast('Seleccione un contrato primero', 'info');
       this.navigate('contracts-dashboard');
@@ -464,10 +468,8 @@ const app = {
       { id: 'alta', name: 'Alta de contrato', desc: 'Captura un contrato nuevo (7 pasos).', icon: 'post_add', roles: ['residente'] },
       { id: 'fianzas', name: 'Fianzas / garantias', desc: 'Registro de polizas y vigencias.', icon: 'verified_user', roles: ['dependencia'] },
       { id: 'estimacion', name: 'Ciclo de estimacion', desc: 'Integra, presenta, revisa y autoriza.', icon: 'query_stats', roles: ['contratista', 'supervision', 'residente'] },
-      { id: 'revision', name: 'Revision / autorizacion', desc: 'Flujo secuencial de estimaciones.', icon: 'task', roles: ['dependencia'] },
       { id: 'bitacora', name: 'Bitacora', desc: 'Apertura, notas, consulta y minutas.', icon: 'menu_book', roles: ['residente', 'contratista', 'supervision'] },
       { id: 'avance', name: 'Avance y seguimiento', desc: 'Trabajos, curva y alertas de atraso.', icon: 'insights', roles: ['residente', 'contratista', 'supervision'] },
-      { id: 'curva', name: 'Curva de avance', desc: 'Graficas fisicas y financieras.', icon: 'insights', roles: ['dependencia'] },
       { id: 'pago', name: 'Pago y transito', desc: 'Transito a pago y registro.', icon: 'payment', roles: ['finanzas', 'contratista'] },
       { id: 'convenios', name: 'Convenios', desc: 'Convenios modificatorios.', icon: 'edit_note', roles: ['dependencia'] },
       { id: 'expediente', name: 'Expediente', desc: 'El contrato consolidado en bloques.', icon: 'folder_zip', roles: ['residente', 'contratista', 'supervision', 'dependencia'] }
@@ -527,12 +529,12 @@ const app = {
       this.navigate('contracts-dashboard');
     } else if (flowId === 'bitacora') {
       this.openContractModule('bitacora');
-    } else if (flowId === 'avance' || flowId === 'curva') {
+    } else if (flowId === 'avance') {
       this.openContractModule('programa');
     } else if (flowId === 'fianzas') {
       this.openContractModule('fianzas');
-    } else if (flowId === 'estimacion' || flowId === 'revision' || flowId === 'pago') {
-      this.openContractModule('estimaciones');
+    } else if (flowId === 'estimacion' || flowId === 'pago') {
+      this.openEstimacionesModule();
     } else if (flowId === 'convenios') {
       this.openContractModule('convenios');
     }
@@ -709,8 +711,7 @@ const app = {
   async selectContract(contractId) {
     this.state.currentContractId = contractId;
     try {
-      const data = await this.api(`/api/contratos/${contractId}`);
-      const contract = data.contrato;
+      const contract = await this.api(`/api/contratos/${contractId}`);
       if (contract) {
         this.state.currentContractData = contract;
         document.getElementById('current-contract-selector').style.display = 'flex';
