@@ -56,6 +56,40 @@ Leyenda: **Cumple** (los 3 criterios se satisfacen), **Cumple con matices** (fun
 4. ~~HU-19: solo CSV, sin selector de periodo~~ — **corregido y verificado** (Excel y PDF reales para los 7 reportes, filtro acumulado/mensual/trimestral).
 5. **HU-12, HU-13, HU-16, HU-18, HU-20** comparten el mismo patrón y son lo que queda: la mecánica central (cálculos, bloqueos) ya funciona, pero falta la capa de evidencias/soportes/semáforos/plazos legales alrededor. Siguiente candidato natural: cualquiera de estas cinco.
 
+## Plan De Cierre (orden correcto para las 8 historias "Parcial")
+
+Quedan 8 historias en **Parcial**: HU-11, HU-12, HU-13, HU-14, HU-15, HU-16, HU-18, HU-20. No se resuelven en el orden en que aparecen en el Excel — hay dependencias reales de datos y de infraestructura entre ellas que conviene respetar para no reconstruir lo mismo dos veces.
+
+### Bloque 1 — Ganancias rapidas e independientes (cualquier orden entre si)
+
+Reutilizan infraestructura que ya existe (`xlsxExport.js`/`pdfExport.js` de HU-10/19, el patron de filtros AND de HU-10). No dependen de nada mas y no bloquean nada mas.
+
+1. **HU-16**: endpoint para descargar las observaciones de una estimacion rechazada en PDF/Excel — pura reutilizacion de los builders de HU-19.
+2. **HU-14**: filtros por periodo y estado (AND) en `GET /contratos/:id/estimaciones` + UI — mismo patron que ya se hizo para HU-10.
+3. **HU-11**: filtro por periodo en minutas/visitas, y campo opcional `minuta_id`/`visita_id` en la nota de bitacora para poder adjuntar una como referencia.
+
+### Bloque 2 — Pieza compartida de plazos legales + notificaciones
+
+4. Crear `backend/src/utils/plazosLegales.js`: helper puro (fecha inicio + dias limite -> dias restantes + semaforo verde/ambar/rojo). Sin esto, HU-13, HU-20 y HU-18 terminarian reimplementando la misma cuenta tres veces.
+5. **HU-13**: semaforo de 15 dias (usa el helper), deshabilitar el boton "Enviar" en la UI cuando pasen los 6 dias (hoy solo falla despues, en el backend), notificacion real a residencia/supervision al enviar (mismo patron `notificaciones` que ya usa HU-07).
+6. **HU-20**: semaforo de 20 dias (mismo helper), reemplazar el techo presupuestal global hardcodeado (`$15,000,000` para todos los contratos) por el monto contractual restante del contrato especifico, validar el estado de la fianza de cumplimiento cuando el contrato lo exija.
+7. **HU-15 (parte A)**: semaforo de 15 dias de revision visible para supervision/residencia — mismo helper del paso 4. La otra mitad de HU-15 queda para el Bloque 4.
+
+### Bloque 3 — HU-18 se apoya en todo lo anterior
+
+8. **HU-18**: avance programado real (portar a backend el calculo acumulado que ya existe en `programa.js` para HU-05, en vez del 60% fijo), atrasos reales (reutiliza el helper de plazos legales del Bloque 2), pendientes reales (reutiliza `requiere_mi_accion` que ya se construyo para HU-17, en vez de contar todas las notas), agrupacion por contratista/ejercicio fiscal/tipo de contratacion y comparativo contra el periodo anterior.
+
+### Bloque 4 — HU-12 al final, y con el HU-15 completo
+
+9. **HU-12**: registro fotografico, soportes al momento de integrar (hoy solo se cargan al enviar, HU-13), y reemplazar el campo manual de ID de nota por un selector real que use el buscador de bitacora de HU-10.
+10. **HU-15 (parte B)**: revision seccion por seccion (caratula/generadores/fotos/soportes/notas) con tipo/severidad/concepto por observacion. **No se puede hacer bien antes del paso 9** — no tiene sentido revisar "seccion de fotos" si HU-12 todavia no captura fotos como bloque propio.
+
+Es la pieza mas grande y la que mas toca la pantalla de integracion de estimaciones (dinero real), por eso queda al final: para entonces ya existen y estan probados el helper de plazos, las notificaciones reales y las exportaciones — reduce el riesgo de tocar el formulario mas sensible del sistema con la infraestructura de soporte todavia sin probar.
+
+### Fuera de este plan (opcional, pulido fino)
+
+HU-02, HU-04, HU-07 y HU-09 quedaron como **Cumple con matices**: ya satisfacen el criterio central, las desviaciones son menores (alertas de fianza solo visuales, buscador de expediente sin descarga por fila, "disparo" de alerta sin evento real, formato "dice/debe decir" sin plantilla dedicada). No estan en la ruta critica; se abordan si se pide explicitamente un 100% literal.
+
 ## Estado general
 
 El núcleo transaccional (contratos, fianzas, convenios, bitácora, programa, trabajos por periodo, integración/pago de estimaciones) funciona y ya está modularizado por dominio en backend (`src/routes/`) y frontend (`js/modules/`). Lo que falta para el 100% frente al Excel es, en su mayoría, la capa de "evidencia y trazabilidad legal" alrededor de ese núcleo: notificaciones reales, semáforos de plazo, exportaciones reales (XLSX/PDF) y algunos filtros de búsqueda que hoy son solo parciales.
