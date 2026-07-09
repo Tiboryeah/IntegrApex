@@ -13,6 +13,14 @@ const {
 
 const router = express.Router();
 
+function userCanAccessContract(user, contract) {
+  if (user.rol === 'dependencia' || user.rol === 'finanzas') return true;
+  return contract.residente_id === user.id ||
+    contract.superintendente_id === user.id ||
+    contract.supervision_id === user.id ||
+    contract.creado_por_id === user.id;
+}
+
 // Alta de contratos (HU-01)
 router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fields([
   { name: 'pdf_contrato', maxCount: 1 },
@@ -234,7 +242,8 @@ router.get('/contratos', authenticate, (req, res) => {
   const filtered = all.filter(c =>
     c.residente_id === user.id ||
     c.superintendente_id === user.id ||
-    c.supervision_id === user.id
+    c.supervision_id === user.id ||
+    c.creado_por_id === user.id
   );
   return res.json(filtered);
 });
@@ -247,10 +256,8 @@ router.get('/contratos/:id', authenticate, (req, res) => {
   }
 
   const user = req.user;
-  if (user.rol !== 'dependencia' && user.rol !== 'finanzas') {
-    if (contract.residente_id !== user.id && contract.superintendente_id !== user.id && contract.supervision_id !== user.id) {
-      return res.status(403).json({ error: "No tienes acceso a este contrato" });
-    }
+  if (!userCanAccessContract(user, contract)) {
+    return res.status(403).json({ error: "No tienes acceso a este contrato" });
   }
 
   const contractBonds = store.find('fianzas', f => f.contrato_id === contract.id).map(f => ({
@@ -285,10 +292,8 @@ router.get('/contratos/:id/expediente/search', authenticate, (req, res) => {
   }
 
   const user = req.user;
-  if (user.rol !== 'dependencia' && user.rol !== 'finanzas') {
-    if (contract.residente_id !== user.id && contract.superintendente_id !== user.id && contract.supervision_id !== user.id) {
-      return res.status(403).json({ error: "No tienes acceso a este contrato" });
-    }
+  if (!userCanAccessContract(user, contract)) {
+    return res.status(403).json({ error: "No tienes acceso a este contrato" });
   }
 
   const { folio, contratista, objeto, periodo, tipo_documento, query } = req.query;

@@ -225,6 +225,22 @@ async function createContract(residente) {
   return data.contrato;
 }
 
+async function creatorSeesContractEvenWhenNotAssigned() {
+  const residente = await login('residente2.demo@integrapex.test', 'IntegrApex2026!');
+  const contract = await createContract(residente);
+
+  assert(contract.creado_por_id === 'u_aldo_res', 'HU-01 contrato no registro al creador esperado');
+  assert(contract.residente_id !== 'u_aldo_res', 'HU-01 prueba requiere contrato creado por usuario no asignado');
+
+  const contracts = await json(await residente.get('/api/contratos'), 'HU-01 listar contratos creados');
+  assert(contracts.some(c => c.id === contract.id), 'HU-01 contrato creado no aparece en lista del creador');
+
+  const detail = await json(await residente.get(`/api/contratos/${contract.id}`), 'HU-01 consultar contrato creado');
+  assert(detail.id === contract.id, 'HU-01 creador no puede consultar detalle del contrato');
+
+  await residente.dispose();
+}
+
 async function openAndSignBitacora({ residente, contratista, supervision, contratoId }) {
   const openRes = await residente.post(`/api/contratos/${contratoId}/bitacora/aperturar`, {
     data: { fecha_entrega_sitio: today(-1) }
@@ -446,6 +462,7 @@ async function main() {
   try {
     await test('SMOKE roles y rutas criticas en Chromium', smokeBrowser);
     await test('HU-00 Registro control de acceso por rol', accessAndRegistration);
+    await test('HU-01 Contrato creado visible para su creador', creatorSeesContractEvenWhenNotAssigned);
     await test('Por Firmar HU-01..HU-21 flujo funcional completo por API', runBusinessFlow);
   } finally {
     await stopServer();
