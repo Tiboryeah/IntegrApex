@@ -2,6 +2,7 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.fianzas = {
+    // PESTAÑA DE FIANZAS (HU-02): Despliega el listado de fianzas del contrato actual (con semáforo de vigencia y alertas).
     renderFianzasTab(contract, outlet) {
       let rows = '';
       if (contract.fianzas.length === 0) {
@@ -78,6 +79,7 @@
       `;
     },
 
+    // REGISTRAR FIANZA (HU-02): Abre el modal para capturar los datos de una nueva fianza (anticipo, cumplimiento o vicios ocultos).
     registrarFianzaDialog() {
       this.showModal(`
         <h2>Registrar fianza / garantía (HU-02)</h2>
@@ -153,6 +155,7 @@
       });
     },
 
+    // REGISTRAR ENDOSO (HU-02): Abre el modal para registrar un endoso de fianza por prórrogas o ajustes de montos.
     registrarEndosoDialog(fianzaId) {
       this.showModal(`
         <h2>Registrar Endoso de Fianza</h2>

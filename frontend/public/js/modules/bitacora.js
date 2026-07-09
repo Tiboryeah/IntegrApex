@@ -5,6 +5,7 @@
     // ==========================================
     // Bandeja de aperturas pendientes de firma.
     // ==========================================
+    // BANDEJA POR FIRMAR (Acta de Apertura): Renderiza el listado de actas de apertura de bitácora que están pendientes de firma por el usuario actual.
     async renderPorFirmarBandeja() {
       const outlet = document.getElementById('app-router-outlet');
       try {
@@ -60,6 +61,7 @@
       } catch (e) {}
     },
 
+    // FIRMAR ACTA DE APERTURA: Envía al servidor la firma electrónica (hash de firma conjunta) para la bitácora del contrato.
     async signBitacoraApertura(bitacoraId) {
       try {
         await this.api(`/api/bitacora/${bitacoraId}/firmar`, { method: 'POST' });
@@ -68,6 +70,7 @@
       } catch (e) {}
     },
 
+    // APERTURA DE BITÁCORA (HU-08): Abre el modal para registrar la fecha formal de entrega del sitio e iniciar el proceso de firmas.
     aperturarBitacoraDialog() {
       this.showModal(`
         <h2>Apertura formal de bitácora (HU-08)</h2>
@@ -102,6 +105,7 @@
       });
     },
 
+    // PESTAÑA DE BITÁCORA (HU-09/HU-10/HU-11): Renderiza el formulario de búsqueda de notas, listado de notas y el panel de nueva nota.
     renderBitacoraTab(contract, outlet) {
       outlet.innerHTML = `
         <div class="dashboard-grid">
@@ -256,6 +260,7 @@
       this.loadBitacoraNotes({ populateFirmantes: true });
     },
 
+    // FILTROS DE FIRMANTES (HU-10): Llena dinámicamente el selector del buscador con los autores de las notas de la bitácora actual.
     populateFirmanteOptions(notes) {
       const select = document.getElementById('s-firmante');
       if (!select) return;
@@ -271,6 +276,7 @@
       select.value = current;
     },
 
+    // CONSULTAR NOTAS (HU-10): Obtiene y despliega la lista filtrada de notas de la bitácora (con tipo, fechas, firmante, vínculo y texto).
     async loadBitacoraNotes(opts = {}) {
       const list = document.getElementById('bitacora-notes-list');
       if (!list) return;
@@ -372,6 +378,7 @@
     },
 
     // HU-09: autocompleta el campo "Dice" con el contenido real de la nota vinculada
+    // AUTOCOMPLETADO DICE/DEBE DECIR (HU-09): Busca el contenido de la nota vinculada para precargar el texto original en la corrección.
     async autocompletarNotaDice() {
       const folio = parseInt(document.getElementById('n-vinculo').value, 10);
       const diceField = document.getElementById('n-dice');
@@ -389,6 +396,7 @@
       if (!nota) this.showToast(`No se encontro la nota #${folio} para autocompletar "Dice"`, 'info');
     },
 
+    // EMITIR Y FIRMAR NOTA (HU-09/HU-11): Envía los datos de la nota nueva (o corrección/dice-debe-decir o referencia a minuta/visita) al servidor.
     async submitNewNote() {
       const tipo = document.getElementById('n-tipo').value;
       const vinculo = document.getElementById('n-vinculo').value;
@@ -440,6 +448,7 @@
       } catch (err) {}
     },
 
+    // EXPORTACIÓN A EXCEL (HU-10): Genera y descarga un archivo .xlsx real con el detalle de las notas de bitácora seleccionadas.
     exportBitacoraExcel() {
       const checked = [...document.querySelectorAll('.bit-note-checkbox:checked')].map(cb => cb.value);
       if (checked.length === 0) {

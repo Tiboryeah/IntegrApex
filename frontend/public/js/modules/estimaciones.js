@@ -5,6 +5,8 @@
     // ==========================================
     // Tablero de estimaciones activas (HU-17).
     // ==========================================
+    // TABLERO DE ESTIMACIONES ACTIVAS (HU-17): Renderiza el panel de estimaciones en curso para todos los roles
+    // con tarjetas de resumen financiero, bandeja de "Mis Pendientes" y línea de tiempo por estimación.
     async renderTableroEstimaciones() {
       this.showLoggedInUI();
       const outlet = document.getElementById('app-router-outlet');
@@ -120,6 +122,7 @@
       } catch (e) {}
     },
 
+    // Navega al detalle de un contrato específico y despliega el detalle de una estimación desde el tablero.
     async verEstimacionDesdeTablero(contratoId, estId) {
       this.state.currentContractId = contratoId;
       await this.navigate('contract-detail', { id: contratoId });
@@ -129,6 +132,7 @@
     // ==========================================
     // Módulo de estimaciones (HU-12 a HU-16).
     // ==========================================
+    // HISTORIAL DE ESTIMACIONES (HU-14): Muestra el listado de estimaciones del contrato actual con filtros por periodo y estado.
     async renderEstimacionesScreen() {
       const outlet = document.getElementById('app-router-outlet');
       const id = this.state.currentContractId;
@@ -257,6 +261,7 @@
       this.renderEstimacionesScreen();
     },
 
+    // INTEGRACIÓN DE ESTIMACIÓN (HU-12): Abre el modal para capturar avances del periodo, anexos (fotos/soportes) y notas de bitácora.
     async integrarEstimacionForm() {
       const contract = this.state.currentContractData;
       const notasSeleccionadas = new Set();
@@ -423,6 +428,7 @@
       return `<span class="badge ${badgeClass}">${texto}</span>`;
     },
 
+    // DETALLE DE ESTIMACIÓN (HU-12 a HU-21): Renderiza el desglose financiero, conceptos, anexos y controles por rol.
     async viewEstimacionDetail(estId) {
       const outlet = document.getElementById('app-router-outlet');
 
@@ -666,6 +672,7 @@
       } catch (e) {}
     },
 
+    // RESOLVER ESTIMACIÓN (HU-15): Envía la resolución final del residente de obra ("autorizada" o "rechazada").
     async resolverEstimacion(estId, resolucion) {
       try {
         await this.api(`/api/estimaciones/${estId}/resolver`, {
@@ -733,6 +740,7 @@
       document.getElementById('turn-obs-rows').insertAdjacentHTML('beforeend', this.filaObservacionRevisionHtml());
     },
 
+    // TURNAR A RESIDENCIA (HU-15): Abre el modal para que supervisión registre observaciones seccionadas detalladas.
     turnarAResidenteDialog(estId) {
       this.showModal(`
         <h2>Revision Tecnica por Seccion (HU-15)</h2>
@@ -780,6 +788,7 @@
       });
     },
 
+    // VERIFICAR PRESUPUESTO (HU-20): Llama al backend para validar la suficiencia presupuestal (Art. 24 LOPSRM).
     async verificarPresupuesto(estId) {
       try {
         const data = await this.api(`/api/estimaciones/${estId}/presupuesto`, {
@@ -789,6 +798,7 @@
       } catch(e) {}
     },
 
+    // INSTRUCCIÓN DE PAGO (HU-20): Modal para cargar Factura y XML y enviar la instrucción a finanzas (valida fianza).
     instruccionPagoDialog(estId) {
       this.showModal(`
         <h2>Cargar Factura y XML de CFDI (HU-20)</h2>
@@ -831,6 +841,7 @@
       });
     },
 
+    // REGISTRAR PAGO (HU-21): Abre el formulario modal para capturar la transferencia SPEI y conciliar el pago.
     registrarPagoDialog(estId) {
       this.showModal(`
         <h2>Registrar Pago Efectuado (HU-21)</h2>
@@ -868,6 +879,7 @@
       });
     },
 
+    // DESCARGAR OBSERVACIONES (HU-16): Genera y descarga el reporte de observaciones en PDF o Excel real.
     descargarObservaciones(estId, formato) {
       const url = `/api/estimaciones/${estId}/observaciones/export?formato=${formato}`;
       const link = document.createElement('a');
@@ -878,6 +890,7 @@
       this.showToast(`Generando observaciones en ${formato === 'pdf' ? 'PDF' : 'Excel'}...`, 'success');
     },
 
+    // REINGRESAR ESTIMACIÓN (HU-16): Permite reingresar una estimación previamente rechazada como una nueva versión.
     reingresarEstimacionForm(estId) {
       const contract = this.state.currentContractData;
 
