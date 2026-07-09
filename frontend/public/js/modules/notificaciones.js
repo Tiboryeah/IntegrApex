@@ -75,7 +75,7 @@
               <div style="display:flex; align-items:flex-start; gap:8px;">
                 <span class="material-icons-round" style="font-size:16px; color: var(--ipn-maroon-light); margin-top:1px;">${TIPO_ICONOS[n.tipo] || 'info'}</span>
                 <div style="flex:1;">
-                  <p style="font-size:12.5px; line-height:1.4; color:#334155; margin:0;">${n.mensaje}</p>
+                  <p style="font-size:12.5px; line-height:1.4; color:#334155; margin:0;">${escapeHtml(n.mensaje)}</p>
                   <span style="font-size:10.5px; color:var(--text-muted);">${new Date(n.creado_en).toLocaleString('es-MX')}</span>
                 </div>
                 ${n.leida ? '' : '<span style="width:7px; height:7px; border-radius:50%; background:#2563eb; margin-top:4px; flex-shrink:0;"></span>'}

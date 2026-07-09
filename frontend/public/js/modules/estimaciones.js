@@ -50,7 +50,7 @@
           : pendientes.map(e => `
               <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid var(--border-color);">
                 <div>
-                  <span class="user-badge" style="background:var(--ipn-maroon); color:white; border:none;">${e.folio_contrato}</span>
+                  <span class="user-badge" style="background:var(--ipn-maroon); color:white; border:none;">${escapeHtml(e.folio_contrato)}</span>
                   <strong style="margin-left:8px;">Periodo #${e.periodo}</strong>
                   <span class="badge ${estadoBadge[e.estado]}" style="margin-left:8px;">${estadoLabel[e.estado]}</span>
                 </div>
@@ -67,7 +67,7 @@
           ? `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:24px;">No hay estimaciones activas para mostrar</td></tr>`
           : estimaciones.map(e => `
               <tr style="cursor:pointer;" onclick="app.verEstimacionDesdeTablero('${e.contrato_id}', '${e.id}')">
-                <td><strong>${e.folio_contrato}</strong></td>
+                <td><strong>${escapeHtml(e.folio_contrato)}</strong></td>
                 <td>Periodo #${e.periodo}</td>
                 <td><span class="badge ${estadoBadge[e.estado]}">${estadoLabel[e.estado]}</span></td>
                 <td>${money(e.monto)}</td>
@@ -188,7 +188,7 @@
           <div class="main-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
               <div>
-                <span class="user-badge" style="background:#5c1e30; color:white; border:none;">${contract.folio}</span>
+                <span class="user-badge" style="background:#5c1e30; color:white; border:none;">${escapeHtml(contract.folio)}</span>
                 <h1>Modulo de Estimaciones Contractuales</h1>
               </div>
               <div style="display: flex; gap: 8px;">
@@ -270,8 +270,8 @@
       contract.catalogo.forEach(c => {
         conceptInputs += `
           <div class="col-6 form-group">
-            <label>Clave: ${c.clave} (${c.descripcion}) - Limite: ${c.cantidad}</label>
-            <input type="number" class="est-av-qty" data-clave="${c.clave}" placeholder="0" step="any" required>
+            <label>Clave: ${escapeHtml(c.clave)} (${escapeHtml(c.descripcion)}) - Limite: ${c.cantidad}</label>
+            <input type="number" class="est-av-qty" data-clave="${escapeHtml(c.clave)}" placeholder="0" step="any" required>
           </div>
         `;
       });
@@ -360,7 +360,7 @@
             : notas.map(n => `
                 <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--border-color); font-size:12.5px; cursor:pointer;">
                   <input type="checkbox" class="est-nota-checkbox" value="${n.id}" ${notasSeleccionadas.has(n.id) ? 'checked' : ''} style="margin-top:2px;">
-                  <span><strong>Nota #${n.folio}</strong> (${n.tipo}) - ${(n.contenido || '').slice(0, 80)}${(n.contenido || '').length > 80 ? '...' : ''}</span>
+                  <span><strong>Nota #${n.folio}</strong> (${escapeHtml(n.tipo)}) - ${escapeHtml((n.contenido || '').slice(0, 80))}${(n.contenido || '').length > 80 ? '...' : ''}</span>
                 </label>
               `).join('');
 
@@ -502,12 +502,12 @@
             ? `<div style="margin:12px 0;">${(data.observaciones || []).map(o => `
                 <div style="border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:8px;">
                   <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
-                    <span class="badge badge-review" style="text-transform:capitalize;">${o.seccion || 'General'}</span>
-                    ${o.concepto ? `<span class="badge badge-presented">${o.concepto}</span>` : ''}
-                    ${o.tipo ? `<span class="badge badge-presented">${o.tipo}</span>` : ''}
-                    ${o.severidad ? `<span class="badge ${severidadBadge[o.severidad] || 'badge-presented'}">${o.severidad}</span>` : ''}
+                    <span class="badge badge-review" style="text-transform:capitalize;">${escapeHtml(o.seccion) || 'General'}</span>
+                    ${o.concepto ? `<span class="badge badge-presented">${escapeHtml(o.concepto)}</span>` : ''}
+                    ${o.tipo ? `<span class="badge badge-presented">${escapeHtml(o.tipo)}</span>` : ''}
+                    ${o.severidad ? `<span class="badge ${severidadBadge[o.severidad] || 'badge-presented'}">${escapeHtml(o.severidad)}</span>` : ''}
                   </div>
-                  <p style="font-size:13px; color:#334155; margin:0;">${o.comentario || ''}</p>
+                  <p style="font-size:13px; color:#334155; margin:0;">${escapeHtml(o.comentario) || ''}</p>
                 </div>
               `).join('')}</div>`
             : `<p style="font-size:13px; color:var(--text-muted); margin-top:12px;">No se registraron observaciones detalladas.</p>`;
@@ -518,7 +518,7 @@
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
               <h3>Estimación rechazada - Observaciones (HU-16)</h3>
-              <p style="margin-bottom:0; font-size:13px; color:var(--text-muted);">${data.comentario_residencia ? `Resolucion de residencia: ${data.comentario_residencia}` : 'Atienda las observaciones tecnicas antes de reingresar.'}</p>
+              <p style="margin-bottom:0; font-size:13px; color:var(--text-muted);">${data.comentario_residencia ? `Resolucion de residencia: ${escapeHtml(data.comentario_residencia)}` : 'Atienda las observaciones tecnicas antes de reingresar.'}</p>
               ${observacionesList}
               <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 ${reingresarBtn}
@@ -561,9 +561,9 @@
           const concept = contract.catalogo.find(c => c.clave === clave);
           conceptRows += `
             <tr>
-              <td><strong>${clave}</strong></td>
-              <td>${concept.descripcion}</td>
-              <td>${qty.toLocaleString('es-MX')} ${concept.unidad}</td>
+              <td><strong>${escapeHtml(clave)}</strong></td>
+              <td>${escapeHtml(concept.descripcion)}</td>
+              <td>${qty.toLocaleString('es-MX')} ${escapeHtml(concept.unidad)}</td>
               <td>$${concept.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
               <td>$${(qty * concept.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
             </tr>
@@ -623,21 +623,21 @@
                   <h3>Registro Fotografico</h3>
                   ${(data.fotos || []).length === 0
                     ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin fotos cargadas</p>'
-                    : `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">${data.fotos.map(f => `<a href="${f.path}" target="_blank"><img src="${f.path}" alt="${f.nombre}" style="width:64px; height:64px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color);"></a>`).join('')}</div>`
+                    : `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">${data.fotos.map(f => `<a href="${f.path}" target="_blank"><img src="${f.path}" alt="${escapeHtml(f.nombre)}" style="width:64px; height:64px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color);"></a>`).join('')}</div>`
                   }
                 </div>
                 <div class="col-4">
                   <h3>Soportes</h3>
                   ${(data.soportes || []).length === 0
                     ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin soportes cargados</p>'
-                    : `<ul class="doc-list">${data.soportes.map(s => `<li><a href="${s.path}" target="_blank">${s.nombre}</a></li>`).join('')}</ul>`
+                    : `<ul class="doc-list">${data.soportes.map(s => `<li><a href="${s.path}" target="_blank">${escapeHtml(s.nombre)}</a></li>`).join('')}</ul>`
                   }
                 </div>
                 <div class="col-4">
                   <h3>Notas de bitácora vinculadas</h3>
                   ${notasVinculadas.length === 0
                     ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin notas vinculadas</p>'
-                    : `<ul class="doc-list">${notasVinculadas.map(n => `<li>Nota #${n.folio} (${n.tipo})</li>`).join('')}</ul>`
+                    : `<ul class="doc-list">${notasVinculadas.map(n => `<li>Nota #${n.folio} (${escapeHtml(n.tipo)})</li>`).join('')}</ul>`
                   }
                 </div>
               </div>
@@ -687,7 +687,7 @@
 
     filaObservacionRevisionHtml() {
       const contract = this.state.currentContractData;
-      const opcionesConcepto = contract.catalogo.map(c => `<option value="${c.clave}">${c.clave}</option>`).join('');
+      const opcionesConcepto = contract.catalogo.map(c => `<option value="${c.clave}">${escapeHtml(c.clave)}</option>`).join('');
       return `
         <div class="turn-obs-row dashboard-grid" style="gap:8px; margin-bottom:10px; border:1px solid var(--border-color); border-radius:6px; padding:10px;">
           <div class="col-3 form-group" style="margin-bottom:0;">
@@ -898,8 +898,8 @@
       contract.catalogo.forEach(c => {
         conceptInputs += `
           <div class="col-6 form-group">
-            <label>Clave: ${c.clave} (${c.descripcion})</label>
-            <input type="number" class="reest-av-qty" data-clave="${c.clave}" placeholder="0" step="any" required>
+            <label>Clave: ${escapeHtml(c.clave)} (${escapeHtml(c.descripcion)})</label>
+            <input type="number" class="reest-av-qty" data-clave="${escapeHtml(c.clave)}" placeholder="0" step="any" required>
           </div>
         `;
       });

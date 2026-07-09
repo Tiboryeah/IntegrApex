@@ -13,14 +13,14 @@
           rows += `
             <tr>
               <td><strong>${conv.id}</strong></td>
-              <td>${conv.descripcion}</td>
-              <td>${conv.motivo || conv.descripcion}</td>
+              <td>${escapeHtml(conv.descripcion)}</td>
+              <td>${escapeHtml(conv.motivo) || escapeHtml(conv.descripcion)}</td>
               <td style="color:${conv.cambio_monto >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:600;">$${conv.cambio_monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
               <td>${conv.cambio_plazo >= 0 ? '+' : ''}${conv.cambio_plazo} días</td>
-              <td><span class="user-badge" style="background:#5c1e30; color:white; border:none;">${conv.articulo_aplicado}</span></td>
+              <td><span class="user-badge" style="background:#5c1e30; color:white; border:none;">${escapeHtml(conv.articulo_aplicado)}</span></td>
               <td>V${conv.version_previa || 1} -> V${conv.version_nueva || '-'}</td>
               <td>${endosos.length}</td>
-              <td>${conv.creado_por_nombre || conv.creado_por || 'N/A'}</td>
+              <td>${escapeHtml(conv.creado_por_nombre) || escapeHtml(conv.creado_por) || 'N/A'}</td>
               <td>${new Date(conv.creado_en).toLocaleDateString()}</td>
             </tr>
           `;

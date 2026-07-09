@@ -20,14 +20,14 @@
         const contratistas = users.filter(u => u.rol === 'contratista' && u.estado === 'aprobado');
         const supervisores = users.filter(u => u.rol === 'supervision' && u.estado === 'aprobado');
 
-        const resOpts = residentes.map(u => `<option value="${u.id}">${u.nombre} (${u.email})</option>`).join('');
-        const conOpts = contratistas.map(u => `<option value="${u.id}">${u.nombre} (${u.email})</option>`).join('');
-        const supOpts = '<option value="">Ninguno</option>' + supervisores.map(u => `<option value="${u.id}">${u.nombre} (${u.email})</option>`).join('');
+        const resOpts = residentes.map(u => `<option value="${u.id}">${escapeHtml(u.nombre)} (${escapeHtml(u.email)})</option>`).join('');
+        const conOpts = contratistas.map(u => `<option value="${u.id}">${escapeHtml(u.nombre)} (${escapeHtml(u.email)})</option>`).join('');
+        const supOpts = '<option value="">Ninguno</option>' + supervisores.map(u => `<option value="${u.id}">${escapeHtml(u.nombre)} (${escapeHtml(u.email)})</option>`).join('');
 
         const depOpts = '<option value="">Selecciona una dependencia...</option>' +
-          dependencias.map(d => `<option value="${d.id}">${d.nombre}${d.siglas ? ' — ' + d.siglas : ''}</option>`).join('');
+          dependencias.map(d => `<option value="${d.id}">${escapeHtml(d.nombre)}${d.siglas ? ' — ' + escapeHtml(d.siglas) : ''}</option>`).join('');
         const empOpts = '<option value="">Selecciona una empresa...</option>' +
-          empresas.map(e => `<option value="${e.id}">${e.nombre_comercial}${e.razon_social ? ' — ' + e.razon_social.toUpperCase() : ''}</option>`).join('');
+          empresas.map(e => `<option value="${e.id}">${escapeHtml(e.nombre_comercial)}${e.razon_social ? ' — ' + escapeHtml(e.razon_social.toUpperCase()) : ''}</option>`).join('');
 
         outlet.innerHTML = `
           <div class="main-container" style="max-width: 900px;">
@@ -385,13 +385,13 @@
         const perMonth = c.cantidad / months;
         const cells = Array.from({ length: months }, (_, idx) => `
           <td>
-            <input type="number" class="prog-input" data-clave="${c.clave}" data-mes="${idx + 1}" min="0" step="any" value="${perMonth.toFixed(4)}" style="padding:6px;">
+            <input type="number" class="prog-input" data-clave="${escapeHtml(c.clave)}" data-mes="${idx + 1}" min="0" step="any" value="${perMonth.toFixed(4)}" style="padding:6px;">
           </td>
         `).join('');
         return `
           <tr>
-            <td><strong>${c.clave}</strong></td>
-            <td>${c.cantidad.toLocaleString('es-MX')} ${c.unidad}</td>
+            <td><strong>${escapeHtml(c.clave)}</strong></td>
+            <td>${c.cantidad.toLocaleString('es-MX')} ${escapeHtml(c.unidad)}</td>
             ${cells}
           </tr>
         `;
@@ -485,7 +485,7 @@
         const sel = document.getElementById('c-dependencia');
         if (!sel) return;
         sel.innerHTML = '<option value="">Selecciona una dependencia...</option>' +
-          lista.map(d => `<option value="${d.id}"${d.id === dep.id ? ' selected' : ''}>${d.nombre}${d.siglas ? ' — ' + d.siglas : ''}</option>`).join('');
+          lista.map(d => `<option value="${d.id}"${d.id === dep.id ? ' selected' : ''}>${escapeHtml(d.nombre)}${d.siglas ? ' — ' + escapeHtml(d.siglas) : ''}</option>`).join('');
       });
     },
 
@@ -496,7 +496,7 @@
         const sel = document.getElementById('c-empresa');
         if (!sel) return;
         sel.innerHTML = '<option value="">Selecciona una empresa...</option>' +
-          lista.map(e => `<option value="${e.id}"${e.id === emp.id ? ' selected' : ''}>${e.nombre_comercial}${e.razon_social ? ' — ' + e.razon_social.toUpperCase() : ''}</option>`).join('');
+          lista.map(e => `<option value="${e.id}"${e.id === emp.id ? ' selected' : ''}>${escapeHtml(e.nombre_comercial)}${e.razon_social ? ' — ' + escapeHtml(e.razon_social.toUpperCase()) : ''}</option>`).join('');
       });
     },
 

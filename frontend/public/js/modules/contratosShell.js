@@ -20,9 +20,9 @@
           gridHtml += `
             <div class="col-4 mini-card" style="display:flex; flex-direction:column; justify-content:space-between;" onclick="app.selectContract('${c.id}')">
               <div>
-                <span class="user-badge" style="background: var(--ipn-maroon); color:white; font-size:10px; font-weight:700;">${c.folio}</span>
+                <span class="user-badge" style="background: var(--ipn-maroon); color:white; font-size:10px; font-weight:700;">${escapeHtml(c.folio)}</span>
                 <h3 style="margin-top: 12px; font-size:15px; line-height: 1.4; color:#0f172a;">
-                  ${c.objeto}
+                  ${escapeHtml(c.objeto)}
                 </h3>
                 <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
                   Monto: <strong>$${c.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong>
@@ -83,8 +83,8 @@
         <div class="main-container">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <div>
-              <span class="user-badge" style="background:var(--ipn-maroon); font-size:11px; font-weight:700; color:white;">${contract.folio}</span>
-              <h1 style="margin-top: 8px; font-size: 24px; color:#0f172a;">${contract.objeto}</h1>
+              <span class="user-badge" style="background:var(--ipn-maroon); font-size:11px; font-weight:700; color:white;">${escapeHtml(contract.folio)}</span>
+              <h1 style="margin-top: 8px; font-size: 24px; color:#0f172a;">${escapeHtml(contract.objeto)}</h1>
             </div>
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-secondary" onclick="app.navigate('inicio')">

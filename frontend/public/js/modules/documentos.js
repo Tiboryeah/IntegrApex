@@ -21,7 +21,7 @@
           minList += `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid var(--border-color);">
               <div>
-                <strong>${m.descripcion}</strong>
+                <strong>${escapeHtml(m.descripcion)}</strong>
                 <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Reunin: ${m.fecha_reunion}</div>
               </div>
               <a href="${m.pdf_path}" target="_blank" class="btn btn-secondary btn-sm">Abrir PDF</a>
@@ -38,10 +38,10 @@
           visList += `
             <div style="padding:12px; border-bottom:1px solid var(--border-color);">
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong>${v.descripcion}</strong>
+                <strong>${escapeHtml(v.descripcion)}</strong>
                 <span class="user-badge" style="background:#f1f5f9; color:#475569; border:none; margin:0;">${v.fecha_visita}</span>
               </div>
-              <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">Asistentes: ${v.asistentes}</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:6px;">Asistentes: ${escapeHtml(v.asistentes)}</div>
             </div>
           `;
         });

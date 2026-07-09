@@ -7,7 +7,7 @@
     document.getElementById('app-header').style.display = 'flex';
     document.getElementById('app-sidebar').style.display = 'flex';
     const badge = document.getElementById('header-user-badge');
-    badge.innerHTML = `<strong>${this.state.user.nombre}</strong> (${this.state.user.rol})`;
+    badge.innerHTML = `<strong>${escapeHtml(this.state.user.nombre)}</strong> (${escapeHtml(this.state.user.rol)})`;
     this.renderSidebar();
     if (typeof this.initNotifPolling === 'function') this.initNotifPolling();
   },

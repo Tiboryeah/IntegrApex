@@ -1,6 +1,20 @@
 (function () {
   window.IntegrApexModules = window.IntegrApexModules || {};
 
+  // Escapa texto de usuario antes de insertarlo en innerHTML. Usar en todo
+  // campo de captura libre (nombres, RFC, notas, comentarios, etc.) que
+  // provenga de la API — evita XSS almacenado cuando ese texto lo escribió
+  // un rol de menor confianza y lo termina viendo un rol con más privilegios.
+  window.escapeHtml = function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
   window.IntegrApexModules.coreUi = {
     // DESPLEGAR TOAST: Muestra notificaciones flotantes emergentes temporales (éxito, error, info) con autoocultado tras 4 segundos.
     showToast(message, type = 'info') {

@@ -32,15 +32,15 @@
         <div class="dashboard-grid" style="margin-top:18px;">
           <div class="col-6">
             <h3>Elementos de la Dependencia</h3>
-            <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">${juridicos.dependencia || 'Pendiente de captura'}</p>
+            <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">${escapeHtml(juridicos.dependencia) || 'Pendiente de captura'}</p>
           </div>
           <div class="col-6">
             <h3>Elementos del Contratista</h3>
-            <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">${juridicos.contratista || 'Pendiente de captura'}</p>
+            <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">${escapeHtml(juridicos.contratista) || 'Pendiente de captura'}</p>
           </div>
           <div class="col-12">
             <h3>Fundamento Legal</h3>
-            <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">${juridicos.fundamento_legal || 'LOPSRM / RLOPSRM'}</p>
+            <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">${escapeHtml(juridicos.fundamento_legal) || 'LOPSRM / RLOPSRM'}</p>
           </div>
         </div>
       `;
@@ -48,7 +48,7 @@
         ? garantiasContrato.map(g => `
             <tr>
               <td>${(g.tipo || '').replace('_', ' ')}</td>
-              <td>${g.afianzadora || 'Pendiente'}</td>
+              <td>${escapeHtml(g.afianzadora) || 'Pendiente'}</td>
               <td>${g.vigencia || 'Pendiente'}</td>
               <td>$${(g.monto || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
             </tr>
@@ -67,13 +67,13 @@
         ? penalizacionesContrato.map(p => `
             <tr>
               <td>${(p.tipo || '').replaceAll('_', ' ')}</td>
-              <td>${p.descripcion || 'Sin descripcion'}</td>
+              <td>${escapeHtml(p.descripcion) || 'Sin descripcion'}</td>
               <td>${p.porcentaje || 0}%</td>
             </tr>
           `).join('')
         : `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sin penalizaciones configuradas</td></tr>`;
       const documentosHtml = documentos.length
-        ? documentos.map(d => `<li><a href="${d.path}" target="_blank">${d.nombre}</a> <span class="badge badge-authorized">${d.inmutable ? 'Inmutable' : 'Editable'}</span></li>`).join('')
+        ? documentos.map(d => `<li><a href="${d.path}" target="_blank">${escapeHtml(d.nombre)}</a> <span class="badge badge-authorized">${d.inmutable ? 'Inmutable' : 'Editable'}</span></li>`).join('')
         : '<li>Sin documentos cargados</li>';
 
       outlet.innerHTML = `
@@ -81,7 +81,7 @@
           <div class="col-8 glass-panel">
             <h2>Expediente del Contrato (HU-04)</h2>
             <table style="width: 100%; margin-top:16px;">
-              <tr><td style="color: var(--text-muted); font-weight:600; width: 35%;">Folio de Obra:</td><td><strong>${contract.folio}</strong></td></tr>
+              <tr><td style="color: var(--text-muted); font-weight:600; width: 35%;">Folio de Obra:</td><td><strong>${escapeHtml(contract.folio)}</strong></td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Monto Contratado (Sin IVA):</td><td>$${contract.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Monto Contratado (Con IVA):</td><td>$${(contract.monto * 1.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Plazo Contractual:</td><td>${contract.plazo_dias} Dias naturales</td></tr>
@@ -186,7 +186,7 @@
             <form id="expediente-search-form" class="dashboard-grid" style="gap:12px; margin-top:16px;">
               <div class="col-3 form-group">
                 <label>Folio</label>
-                <input type="text" id="exp-folio" placeholder="${contract.folio}">
+                <input type="text" id="exp-folio" placeholder="${escapeHtml(contract.folio)}">
               </div>
               <div class="col-3 form-group">
                 <label>Contratista</label>
@@ -230,7 +230,7 @@
               <div class="col-6">
                 <h3>Version vigente</h3>
                 <p style="font-size:13px; color:var(--text-muted); line-height:1.5;">
-                  ${versiones.length ? `Version ${versiones[versiones.length - 1].version}: ${versiones[versiones.length - 1].motivo}` : 'Contrato sin snapshot de version registrado.'}
+                  ${versiones.length ? `Version ${versiones[versiones.length - 1].version}: ${escapeHtml(versiones[versiones.length - 1].motivo)}` : 'Contrato sin snapshot de version registrado.'}
                 </p>
               </div>
             </div>
@@ -251,9 +251,9 @@
         const imp = item.precio_unitario * item.cantidad;
         rows += `
           <tr>
-            <td><strong>${item.clave}</strong></td>
-            <td>${item.descripcion}</td>
-            <td>${item.unidad}</td>
+            <td><strong>${escapeHtml(item.clave)}</strong></td>
+            <td>${escapeHtml(item.descripcion)}</td>
+            <td>${escapeHtml(item.unidad)}</td>
             <td>${item.cantidad.toLocaleString('es-MX')}</td>
             <td>$${item.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
             <td>$${imp.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
@@ -323,10 +323,10 @@
             <tbody>
               ${results.map(r => `
                 <tr>
-                  <td><span class="badge badge-review">${r.bloque}</span></td>
-                  <td>${r.tipo}</td>
-                  <td><strong>${r.titulo}</strong></td>
-                  <td>${r.descripcion || ''}</td>
+                  <td><span class="badge badge-review">${escapeHtml(r.bloque)}</span></td>
+                  <td>${escapeHtml(r.tipo)}</td>
+                  <td><strong>${escapeHtml(r.titulo)}</strong></td>
+                  <td>${escapeHtml(r.descripcion) || ''}</td>
                   <td>${r.fecha ? new Date(r.fecha).toLocaleDateString('es-MX') : 'N/A'}</td>
                   <td>${r.archivo ? `<a href="${r.archivo}" target="_blank" style="color: var(--ipn-maroon-light); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:4px;"><span class="material-icons-round" style="font-size:15px;">download</span> Descargar</a>` : '<span style="color:var(--text-muted); font-size:12px;">Sin archivo</span>'}</td>
                 </tr>

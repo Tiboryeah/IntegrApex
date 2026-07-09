@@ -26,7 +26,7 @@
           rows += `
             <tr>
               <td><strong>${f.tipo.toUpperCase()}</strong></td>
-              <td>${f.afianzadora}</td>
+              <td>${escapeHtml(f.afianzadora)}</td>
               <td>$${f.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
               <td>${f.vigencia}</td>
               <td>${alertLabel}</td>

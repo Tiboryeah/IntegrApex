@@ -8,7 +8,7 @@
     renderProgramaTab(contract, outlet) {
       const filterConcept = this.state.programaFilterConcept || '';
       const filterPeriod = parseInt(this.state.programaFilterPeriod || 0, 10);
-      const conceptOptions = contract.catalogo.map(c => `<option value="${c.clave}" ${filterConcept === c.clave ? 'selected' : ''}>${c.clave} - ${c.descripcion}</option>`).join('');
+      const conceptOptions = contract.catalogo.map(c => `<option value="${c.clave}" ${filterConcept === c.clave ? 'selected' : ''}>${escapeHtml(c.clave)} - ${escapeHtml(c.descripcion)}</option>`).join('');
       const periodOptions = contract.programa.map(m => `<option value="${m.mes}" ${filterPeriod === m.mes ? 'selected' : ''}>Periodo ${m.mes}</option>`).join('');
 
       outlet.innerHTML = `
@@ -187,7 +187,7 @@
           const progress = scheduledQty > 0 ? Math.min(100, (execQty / scheduledQty) * 100) : 0;
           return `<div class="gantt-period-cell" style="padding: 6px; display: flex; align-items:center; justify-content:center;">${scheduledQty > 0 ? `<div class="gantt-bar" title="Programado: ${scheduledQty} / Ejecutado: ${execQty}"><div class="gantt-progress" style="width: ${progress}%;"></div></div>` : ''}</div>`;
         }).join('');
-        return `<div class="gantt-row"><div class="gantt-col-name">${item.clave}</div><div class="gantt-col-periods">${blocks}</div></div>`;
+        return `<div class="gantt-row"><div class="gantt-col-name">${escapeHtml(item.clave)}</div><div class="gantt-col-periods">${blocks}</div></div>`;
       }).join('');
 
       document.getElementById('gantt-chart-outlet').innerHTML = `
@@ -204,7 +204,7 @@
         const executedQty = trabajosRegistrados.filter(t => !filterPeriod || t.periodo_numero === filterPeriod).reduce((sum, t) => sum + parseFloat((t.cantidades || {})[item.clave] || 0), 0);
         const paidQty = paidEsts.filter(e => !filterPeriod || e.periodo_numero === filterPeriod).reduce((sum, e) => sum + parseFloat((e.avances || {})[item.clave] || 0), 0);
         const pct = scheduledQty > 0 ? (executedQty / scheduledQty) * 100 : 0;
-        return `<tr><td><strong>${item.clave}</strong></td><td>${scheduledQty.toFixed(2)}</td><td>${executedQty.toFixed(2)}</td><td>${paidQty.toFixed(2)}</td><td>${Math.min(100, pct).toFixed(1)}%</td></tr>`;
+        return `<tr><td><strong>${escapeHtml(item.clave)}</strong></td><td>${scheduledQty.toFixed(2)}</td><td>${executedQty.toFixed(2)}</td><td>${paidQty.toFixed(2)}</td><td>${Math.min(100, pct).toFixed(1)}%</td></tr>`;
       }).join('');
 
       document.getElementById('program-progress-summary').innerHTML = `
@@ -316,8 +316,8 @@
 
       const noteOptions = notes.length === 0
         ? `<option value="">Sin notas disponibles</option>`
-        : notes.map(n => `<option value="${n.id}">Nota #${n.folio} - ${n.tipo}</option>`).join('');
-      const conceptInputs = contract.catalogo.map(c => `<tr><td><strong>${c.clave}</strong></td><td>${c.descripcion}</td><td>${c.unidad}</td><td>${c.cantidad}</td><td><input class="trabajo-qty" data-clave="${c.clave}" type="number" step="0.0001" min="0" value="0"></td></tr>`).join('');
+        : notes.map(n => `<option value="${n.id}">Nota #${n.folio} - ${escapeHtml(n.tipo)}</option>`).join('');
+      const conceptInputs = contract.catalogo.map(c => `<tr><td><strong>${escapeHtml(c.clave)}</strong></td><td>${escapeHtml(c.descripcion)}</td><td>${escapeHtml(c.unidad)}</td><td>${c.cantidad}</td><td><input class="trabajo-qty" data-clave="${escapeHtml(c.clave)}" type="number" step="0.0001" min="0" value="0"></td></tr>`).join('');
 
       this.showModal(`
         <h2>Registrar Trabajos Terminados (HU-06)</h2>
@@ -372,7 +372,7 @@
     // CONFIGURAR ALERTA (HU-07): Modal para definir un límite de desviación para un concepto específico y canal de aviso.
     configurarAlertaDialog() {
       const contract = this.state.currentContractData;
-      const conceptOpts = contract.catalogo.map(c => `<option value="${c.clave}">${c.clave} - ${c.descripcion}</option>`).join('');
+      const conceptOpts = contract.catalogo.map(c => `<option value="${c.clave}">${escapeHtml(c.clave)} - ${escapeHtml(c.descripcion)}</option>`).join('');
 
       this.showModal(`
         <h2>Configurar Alerta de Atraso (HU-07)</h2>

@@ -62,19 +62,19 @@
                   <div style="display:flex;align-items:center;gap:10px;">
                     <div style="width:36px;height:36px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
                       ${u.foto_url
-                        ? `<img src="${u.foto_url}" style="width:100%;height:100%;object-fit:cover;">`
+                        ? `<img src="${escapeHtml(u.foto_url)}" style="width:100%;height:100%;object-fit:cover;">`
                         : `<span class="material-icons-round" style="font-size:20px;color:#94a3b8;">person</span>`}
                     </div>
                     <div>
-                      <div style="font-weight:600;font-size:14px;color:#0f172a;">${u.nombre}</div>
-                      ${u.cargo ? `<div style="font-size:11px;color:var(--text-muted);">${u.cargo}</div>` : ''}
+                      <div style="font-weight:600;font-size:14px;color:#0f172a;">${escapeHtml(u.nombre)}</div>
+                      ${u.cargo ? `<div style="font-size:11px;color:var(--text-muted);">${escapeHtml(u.cargo)}</div>` : ''}
                     </div>
                   </div>
                 </td>
-                <td style="font-size:13px;">${u.email}</td>
+                <td style="font-size:13px;">${escapeHtml(u.email)}</td>
                 <td>${rolBadge(u.rol)}</td>
-                <td style="font-size:13px;">${emp}</td>
-                <td style="font-size:13px;">${u.telefono || '—'}</td>
+                <td style="font-size:13px;">${escapeHtml(emp)}</td>
+                <td style="font-size:13px;">${escapeHtml(u.telefono) || '—'}</td>
                 <td>${estadoBadge(u.estado)}</td>
                 <td>
                   ${u.estado === 'pendiente'
@@ -142,9 +142,9 @@
       ]);
 
       const empOpts = '<option value="">Sin empresa</option>' +
-        empresas.map(e => `<option value="${e.id}">${e.nombre_comercial}</option>`).join('');
+        empresas.map(e => `<option value="${e.id}">${escapeHtml(e.nombre_comercial)}</option>`).join('');
       const depOpts = '<option value="">Sin dependencia</option>' +
-        dependencias.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+        dependencias.map(d => `<option value="${d.id}">${escapeHtml(d.nombre)}</option>`).join('');
 
       const modalContainer = document.getElementById('modal-container');
       const modalContent = document.getElementById('modal-content-outlet');
@@ -291,7 +291,7 @@
         const sel = document.getElementById('nu-empresa');
         if (!sel) return;
         sel.innerHTML = '<option value="">Sin empresa</option>' +
-          lista.map(e => `<option value="${e.id}" ${e.id === emp.id ? 'selected' : ''}>${e.nombre_comercial}</option>`).join('');
+          lista.map(e => `<option value="${e.id}" ${e.id === emp.id ? 'selected' : ''}>${escapeHtml(e.nombre_comercial)}</option>`).join('');
       });
     },
 
@@ -301,7 +301,7 @@
         const sel = document.getElementById('nu-dependencia');
         if (!sel) return;
         sel.innerHTML = '<option value="">Sin dependencia</option>' +
-          lista.map(d => `<option value="${d.id}" ${d.id === dep.id ? 'selected' : ''}>${d.nombre}</option>`).join('');
+          lista.map(d => `<option value="${d.id}" ${d.id === dep.id ? 'selected' : ''}>${escapeHtml(d.nombre)}</option>`).join('');
       });
     },
 

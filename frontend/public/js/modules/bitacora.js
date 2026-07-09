@@ -18,8 +18,8 @@
           pending.forEach(p => {
             rows += `
               <tr>
-                <td><strong>${p.folio}</strong></td>
-                <td>${p.objeto}</td>
+                <td><strong>${escapeHtml(p.folio)}</strong></td>
+                <td>${escapeHtml(p.objeto)}</td>
                 <td>${p.fecha_entrega_sitio}</td>
                 <td>
                   <button class="btn btn-primary btn-sm" onclick="app.signBitacoraApertura('${p.bitacora_id}')">
@@ -187,10 +187,10 @@
                 <select id="n-referencia">
                   <option value="">Ninguna</option>
                   <optgroup label="Minutas">
-                    ${(contract.minutas || []).map(m => `<option value="minuta:${m.id}">${m.descripcion} (${m.fecha_reunion})</option>`).join('')}
+                    ${(contract.minutas || []).map(m => `<option value="minuta:${m.id}">${escapeHtml(m.descripcion)} (${escapeHtml(m.fecha_reunion)})</option>`).join('')}
                   </optgroup>
                   <optgroup label="Visitas">
-                    ${(contract.visitas || []).map(v => `<option value="visita:${v.id}">${v.descripcion} (${v.fecha_visita})</option>`).join('')}
+                    ${(contract.visitas || []).map(v => `<option value="visita:${v.id}">${escapeHtml(v.descripcion)} (${escapeHtml(v.fecha_visita)})</option>`).join('')}
                   </optgroup>
                 </select>
               </div>
@@ -272,7 +272,7 @@
       });
       const current = select.value;
       select.innerHTML = '<option value="">Todos</option>' +
-        [...firmantes.entries()].map(([id, nombre]) => `<option value="${id}">${nombre}</option>`).join('');
+        [...firmantes.entries()].map(([id, nombre]) => `<option value="${id}">${escapeHtml(nombre)}</option>`).join('');
       select.value = current;
     },
 
@@ -335,11 +335,11 @@
             const contenidoHtml = n.correccion
               ? `
                 <div style="font-size:13px; line-height:1.6; color:#334155;">
-                  <div style="margin-bottom:6px;"><strong style="color:#b91c1c;">Dice:</strong> <span style="text-decoration:line-through; color:#94a3b8;">${n.correccion.dice}</span></div>
-                  <div><strong style="color:#15803d;">Debe decir:</strong> ${n.correccion.debe_decir}</div>
+                  <div style="margin-bottom:6px;"><strong style="color:#b91c1c;">Dice:</strong> <span style="text-decoration:line-through; color:#94a3b8;">${escapeHtml(n.correccion.dice)}</span></div>
+                  <div><strong style="color:#15803d;">Debe decir:</strong> ${escapeHtml(n.correccion.debe_decir)}</div>
                 </div>
               `
-              : `<p style="font-size:13.5px; line-height: 1.5; white-space: pre-line; color:#334155;">${n.contenido}</p>`;
+              : `<p style="font-size:13.5px; line-height: 1.5; white-space: pre-line; color:#334155;">${escapeHtml(n.contenido)}</p>`;
 
             html += `
               <div class="glass-panel" style="margin-bottom: 16px;">
@@ -359,7 +359,7 @@
                 ${contenidoHtml}
 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; border-top:1px dashed var(--border-color); padding-top:10px; font-size:10.5px; color:var(--text-muted);">
-                  <span>Emitido por: <strong>${n.creado_por_nombre}</strong> (${n.creado_por_rol})</span>
+                  <span>Emitido por: <strong>${escapeHtml(n.creado_por_nombre)}</strong> (${escapeHtml(n.creado_por_rol)})</span>
                   <span style="font-family: monospace; font-size:10px;">Firma Hash: ${n.firma_hash ? n.firma_hash.substring(0, 16) + '...' : 'N/A'}</span>
                 </div>
               </div>

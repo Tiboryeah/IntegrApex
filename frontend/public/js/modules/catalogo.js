@@ -59,11 +59,11 @@
           lista.forEach(d => {
             rows += `
               <tr>
-                <td><strong>${d.nombre}</strong>${d.siglas ? `<br><span style="font-size:11px; color:var(--text-muted);">${d.siglas}</span>` : ''}</td>
-                <td style="font-size:13px;">${d.rfc || '—'}</td>
-                <td style="font-size:13px;">${d.nombre_contacto || '—'}</td>
-                <td style="font-size:13px;">${d.email || '—'}</td>
-                <td style="font-size:13px; color:var(--text-muted);">${d.telefono || '—'}</td>
+                <td><strong>${escapeHtml(d.nombre)}</strong>${d.siglas ? `<br><span style="font-size:11px; color:var(--text-muted);">${escapeHtml(d.siglas)}</span>` : ''}</td>
+                <td style="font-size:13px;">${escapeHtml(d.rfc) || '—'}</td>
+                <td style="font-size:13px;">${escapeHtml(d.nombre_contacto) || '—'}</td>
+                <td style="font-size:13px;">${escapeHtml(d.email) || '—'}</td>
+                <td style="font-size:13px; color:var(--text-muted);">${escapeHtml(d.telefono) || '—'}</td>
               </tr>`;
           });
         }
@@ -113,11 +113,11 @@
           lista.forEach(e => {
             rows += `
               <tr>
-                <td><strong>${e.nombre_comercial}</strong>${e.razon_social ? `<br><span style="font-size:11px; color:var(--text-muted);">${e.razon_social}</span>` : ''}</td>
-                <td style="font-size:13px;">${e.rfc || '—'}</td>
-                <td style="font-size:13px;">${e.representante || '—'}</td>
-                <td style="font-size:13px;">${e.email || '—'}</td>
-                <td style="font-size:13px; color:var(--text-muted);">${e.telefono || '—'}</td>
+                <td><strong>${escapeHtml(e.nombre_comercial)}</strong>${e.razon_social ? `<br><span style="font-size:11px; color:var(--text-muted);">${escapeHtml(e.razon_social)}</span>` : ''}</td>
+                <td style="font-size:13px;">${escapeHtml(e.rfc) || '—'}</td>
+                <td style="font-size:13px;">${escapeHtml(e.representante) || '—'}</td>
+                <td style="font-size:13px;">${escapeHtml(e.email) || '—'}</td>
+                <td style="font-size:13px; color:var(--text-muted);">${escapeHtml(e.telefono) || '—'}</td>
               </tr>`;
           });
         }

@@ -35,7 +35,7 @@
         const cuerpo = agrupacion
           ? data.grupos.map(g => `
               <div class="col-12">
-                <h3 style="margin-top:18px; margin-bottom:8px; color:var(--primary);">${AGRUPACIONES[agrupacion]}: ${g.clave}</h3>
+                <h3 style="margin-top:18px; margin-bottom:8px; color:var(--primary);">${AGRUPACIONES[agrupacion]}: ${escapeHtml(g.clave)}</h3>
               </div>
               ${g.contratos.map(c => this.renderTarjetaPortafolio(c)).join('')}
             `).join('')
@@ -79,11 +79,11 @@
         <div class="col-4 mini-card" style="border-left:4px solid ${semaforoColor[c.semaforo]}; cursor:pointer;"
              onclick="app.handleClickTarjetaPortafolio('${c.id}')">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <span class="user-badge" style="background:var(--ipn-maroon); color:white; font-size:10px; font-weight:700;">${c.folio}</span>
+            <span class="user-badge" style="background:var(--ipn-maroon); color:white; font-size:10px; font-weight:700;">${escapeHtml(c.folio)}</span>
             <span class="semaforo-dot ${c.semaforo}" title="Semáforo: ${c.semaforo}"></span>
           </div>
-          <h3 style="margin-top:10px; font-size:14.5px; line-height:1.4; color:#0f172a;">${c.objeto}</h3>
-          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">Contratista: ${c.contratista} | Ejercicio ${c.ejercicio_fiscal}</div>
+          <h3 style="margin-top:10px; font-size:14.5px; line-height:1.4; color:#0f172a;">${escapeHtml(c.objeto)}</h3>
+          <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">Contratista: ${escapeHtml(c.contratista)} | Ejercicio ${c.ejercicio_fiscal}</div>
 
           <div style="margin-top:14px;">
             <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:4px;">
@@ -140,8 +140,8 @@
         const penalizacionesTotal = (reporte.penalizaciones || []).reduce((sum, p) => sum + (p.monto || 0), 0);
 
         this.showModal(`
-          <h2>Detalle Consolidado - ${item.folio}</h2>
-          <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">${item.objeto}</p>
+          <h2>Detalle Consolidado - ${escapeHtml(item.folio)}</h2>
+          <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">${escapeHtml(item.objeto)}</p>
           <table style="width:100%;">
             <tr><td style="color:var(--text-muted); font-weight:600; width:55%;">Semáforo:</td><td><span class="semaforo-dot ${item.semaforo}"></span> ${item.semaforo.toUpperCase()}</td></tr>
             <tr><td style="color:var(--text-muted); font-weight:600;">Avance físico:</td><td>${item.avance_fisico.toFixed(1)}%</td></tr>
