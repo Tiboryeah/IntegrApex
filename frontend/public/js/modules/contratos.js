@@ -10,7 +10,11 @@
       const outlet = document.getElementById('app-router-outlet');
 
       try {
-        const users = await this.api('/api/users');
+        const [users, dependencias, empresas] = await Promise.all([
+          this.api('/api/users'),
+          this.loadDependenciasOpts(),
+          this.loadEmpresasOpts()
+        ]);
 
         const residentes = users.filter(u => u.rol === 'residente' && u.estado === 'aprobado');
         const contratistas = users.filter(u => u.rol === 'contratista' && u.estado === 'aprobado');
@@ -20,28 +24,64 @@
         const conOpts = contratistas.map(u => `<option value="${u.id}">${u.nombre} (${u.email})</option>`).join('');
         const supOpts = '<option value="">Ninguno</option>' + supervisores.map(u => `<option value="${u.id}">${u.nombre} (${u.email})</option>`).join('');
 
+        const depOpts = '<option value="">Selecciona una dependencia...</option>' +
+          dependencias.map(d => `<option value="${d.id}">${d.nombre}${d.siglas ? ' — ' + d.siglas : ''}</option>`).join('');
+        const empOpts = '<option value="">Selecciona una empresa...</option>' +
+          empresas.map(e => `<option value="${e.id}">${e.nombre_comercial}${e.razon_social ? ' — ' + e.razon_social.toUpperCase() : ''}</option>`).join('');
+
         outlet.innerHTML = `
           <div class="main-container" style="max-width: 900px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-              <h1>Alta de Contrato (HU-01)</h1>
+              <h1>Nuevo Contrato</h1>
               <button class="btn btn-secondary" onclick="app.navigate('inicio')">
                 Cancelar
               </button>
             </div>
             <form id="alta-contrato-form" class="glass-panel">
-              <h2 style="font-size:16px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">1. Datos Generales</h2>
+
+              <h2 style="font-size:16px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">IDENTIFICACIÓN</h2>
               <div class="dashboard-grid">
                 <div class="col-6 form-group">
-                  <label>Folio Contractual (unico)</label>
-                  <input type="text" id="c-folio" placeholder="SOP-2026-007" required>
+                  <label>FOLIO <span style="color:var(--accent-red);">*</span></label>
+                  <input type="text" id="c-folio" placeholder="Ej. CONT-2024-001" required>
                 </div>
                 <div class="col-6 form-group">
-                  <label>Monto Total Sin IVA (Subtotal)</label>
-                  <input type="number" id="c-monto" placeholder="8500000" required onchange="app.refreshAltaDerivedValues()">
+                  <label>NOMBRE DE LA OBRA <span style="color:var(--accent-red);">*</span></label>
+                  <input type="text" id="c-objeto" placeholder="Descripción breve de la obra" required>
                 </div>
                 <div class="col-12 form-group">
-                  <label>Objeto del Contrato</label>
-                  <textarea id="c-objeto" rows="2" placeholder="Describa el objeto de la obra..." required></textarea>
+                  <label>DEPENDENCIA CONTRATANTE <span style="color:var(--accent-red);">*</span></label>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="c-dependencia" style="flex:1;">${depOpts}</select>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="app.altaContratNuevaDep()">
+                      + Nuevo
+                    </button>
+                  </div>
+                </div>
+                <div class="col-12 form-group">
+                  <label>EMPRESA CONTRATISTA <span style="color:var(--accent-red);">*</span></label>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <select id="c-empresa" style="flex:1;">${empOpts}</select>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="app.altaContratNuevaEmp()">
+                      + Nuevo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">OBJETO DEL CONTRATO</h2>
+              <div class="dashboard-grid">
+                <div class="col-6 form-group">
+                  <label>Monto Total Sin IVA (Subtotal) <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">(Se calcula sumando el catálogo)</span></label>
+                  <input type="text" id="c-monto" value="120,000.00" readonly style="background:#f1f5f9; cursor:not-allowed; font-weight:700; color:#334155;">
+                </div>
+                <div class="col-6 form-group">
+                  <label>Modalidad de Pago</label>
+                  <select id="c-modalidad">
+                    <option value="Precios Unitarios">Precios Unitarios</option>
+                    <option value="Precio Alzado">Precio Alzado</option>
+                    <option value="Mixto">Mixto</option>
+                  </select>
                 </div>
                 <div class="col-4 form-group">
                   <label>Plazo (Dias Naturales)</label>
@@ -54,14 +94,6 @@
                 <div class="col-4 form-group">
                   <label>Anticipo (%)</label>
                   <input type="number" id="c-anticipo" value="30" min="0" max="100" step="0.01" required onchange="app.refreshAltaDerivedValues()">
-                </div>
-                <div class="col-4 form-group">
-                  <label>Modalidad de Pago</label>
-                  <select id="c-modalidad">
-                    <option value="Precios Unitarios">Precios Unitarios</option>
-                    <option value="Precio Alzado">Precio Alzado</option>
-                    <option value="Mixto">Mixto</option>
-                  </select>
                 </div>
               </div>
 
@@ -83,31 +115,39 @@
 
               <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">3. Catálogo de conceptos</h2>
               <div style="margin-bottom: 20px;">
-                <div class="table-container">
-                  <table id="catalogo-table">
+                <div class="table-container" style="overflow-x:auto;">
+                  <table id="catalogo-table" style="min-width:700px; table-layout:fixed; width:100%;">
+                    <colgroup>
+                      <col style="width:100px;">
+                      <col style="width:auto; min-width:160px;">
+                      <col style="width:80px;">
+                      <col style="width:100px;">
+                      <col style="width:120px;">
+                      <col style="width:130px;">
+                    </colgroup>
                     <thead>
                       <tr>
-                        <th>Clave</th>
-                        <th>Descripción</th>
-                        <th>Unidad</th>
-                        <th>Cantidad</th>
-                        <th>P. Unitario</th>
-                        <th>Importe</th>
+                        <th>CLAVE</th>
+                        <th>DESCRIPCIÓN</th>
+                        <th>UNIDAD</th>
+                        <th>CANTIDAD</th>
+                        <th>P. UNITARIO</th>
+                        <th style="text-align:right;">IMPORTE</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td><input type="text" class="cat-clave" value="CON-01" required style="padding: 6px;"></td>
-                        <td><input type="text" class="cat-desc" value="Excavacion en zanja" required style="padding: 6px;"></td>
-                        <td><input type="text" class="cat-unidad" value="m3" required style="padding: 6px;"></td>
-                        <td><input type="number" class="cat-cantidad" value="1000" required style="padding: 6px;" onchange="app.recalcCatImportes()"></td>
-                        <td><input type="number" class="cat-precio" value="120" required style="padding: 6px;" onchange="app.recalcCatImportes()"></td>
-                        <td class="cat-importe">$120,000.00</td>
+                        <td><input type="text" class="cat-clave" value="CON-01" required style="width:100%; padding:6px; box-sizing:border-box;"></td>
+                        <td><input type="text" class="cat-desc" value="Excavacion en zanja" required style="width:100%; padding:6px; box-sizing:border-box;"></td>
+                        <td><input type="text" class="cat-unidad" value="m3" required style="width:100%; padding:6px; box-sizing:border-box;"></td>
+                        <td><input type="number" class="cat-cantidad" value="1000" required style="width:100%; padding:6px; box-sizing:border-box;" oninput="app.recalcCatImportes()"></td>
+                        <td><input type="number" class="cat-precio" value="120" required style="width:100%; padding:6px; box-sizing:border-box;" oninput="app.recalcCatImportes()"></td>
+                        <td class="cat-importe" style="text-align:right; font-weight:600; white-space:nowrap; padding-right:8px;">$120,000.00</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 10px;" onclick="app.addConceptRow()">
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 12px;" onclick="app.addConceptRow()">
                   <span class="material-icons-round" style="font-size: 14px;">add</span> Agregar Concepto
                 </button>
               </div>
@@ -125,10 +165,26 @@
                 <div class="col-6 form-group">
                   <label>Elementos de la Dependencia</label>
                   <textarea id="c-jur-dep" rows="3" placeholder="Oficio de adjudicacion, suficiencia presupuestal, autorizaciones..." required></textarea>
+                  <div style="margin-top: 8px;">
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">ADJUNTAR DOCUMENTO (OPCIONAL)</label>
+                    <input type="file" id="c-jur-dep-file" accept=".pdf,.zip,.doc,.docx" style="display:none;" onchange="document.getElementById('c-jur-dep-file-lbl').textContent = this.files[0]?.name || 'Adjuntar archivo'">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('c-jur-dep-file').click()" style="display:inline-flex; align-items:center; gap:4px; padding:6px 12px; font-size:12px;">
+                      <span class="material-icons-round" style="font-size:14px;">attach_file</span>
+                      <span id="c-jur-dep-file-lbl">Adjuntar archivo</span>
+                    </button>
+                  </div>
                 </div>
                 <div class="col-6 form-group">
                   <label>Elementos del Contratista</label>
                   <textarea id="c-jur-cont" rows="3" placeholder="Acta constitutiva, representante legal, documentacion fiscal..." required></textarea>
+                  <div style="margin-top: 8px;">
+                    <label style="font-size:11px; color:var(--text-muted); font-weight:600; display:block; margin-bottom:4px;">ADJUNTAR DOCUMENTO (OPCIONAL)</label>
+                    <input type="file" id="c-jur-cont-file" accept=".pdf,.zip,.doc,.docx" style="display:none;" onchange="document.getElementById('c-jur-cont-file-lbl').textContent = this.files[0]?.name || 'Adjuntar archivo'">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('c-jur-cont-file').click()" style="display:inline-flex; align-items:center; gap:4px; padding:6px 12px; font-size:12px;">
+                      <span class="material-icons-round" style="font-size:14px;">attach_file</span>
+                      <span id="c-jur-cont-file-lbl">Adjuntar archivo</span>
+                    </button>
+                  </div>
                 </div>
                 <div class="col-12 form-group">
                   <label>Fundamento Legal</label>
@@ -152,19 +208,19 @@
                       <td><strong>Anticipo</strong></td>
                       <td><input type="text" class="gar-afianzadora" placeholder="Afianzadora" required style="padding:6px;"></td>
                       <td><input type="date" class="gar-vigencia" required style="padding:6px;"></td>
-                      <td><input type="number" class="gar-monto" id="gar-anticipo" min="0.01" step="0.01" required style="padding:6px;"></td>
+                      <td><input type="text" class="gar-monto" id="gar-anticipo" required style="padding:6px;" oninput="app.handleGarMontoInput(this)"></td>
                     </tr>
                     <tr data-tipo="cumplimiento">
                       <td><strong>Cumplimiento</strong></td>
                       <td><input type="text" class="gar-afianzadora" placeholder="Afianzadora" required style="padding:6px;"></td>
                       <td><input type="date" class="gar-vigencia" required style="padding:6px;"></td>
-                      <td><input type="number" class="gar-monto" id="gar-cumplimiento" min="0.01" step="0.01" required style="padding:6px;"></td>
+                      <td><input type="text" class="gar-monto" id="gar-cumplimiento" required style="padding:6px;" oninput="app.handleGarMontoInput(this)"></td>
                     </tr>
                     <tr data-tipo="vicios_ocultos">
                       <td><strong>Vicios ocultos</strong></td>
                       <td><input type="text" class="gar-afianzadora" placeholder="Afianzadora" required style="padding:6px;"></td>
                       <td><input type="date" class="gar-vigencia" required style="padding:6px;"></td>
-                      <td><input type="number" class="gar-monto" id="gar-vicios" min="0.01" step="0.01" required style="padding:6px;"></td>
+                      <td><input type="text" class="gar-monto" id="gar-vicios" required style="padding:6px;" oninput="app.handleGarMontoInput(this)"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -191,31 +247,59 @@
                 </div>
               </div>
 
-              <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">8. Archivo PDF del Contrato</h2>
+              <h2 style="font-size:13px; font-weight:700; letter-spacing:.06em; margin-top:28px; margin-bottom:12px; color:var(--primary);">CONTRATO PDF <span style="font-weight:400; color:var(--text-muted); font-size:12px;">(opcional)</span></h2>
               <div class="form-group">
-                <div class="file-upload-wrapper" id="pdf-wrapper" style="border: 2px dashed #cbd5e1; padding: 24px; border-radius: 8px; text-align: center; cursor: pointer;">
-                  <span class="material-icons-round" style="font-size: 40px; color: var(--text-muted);">picture_as_pdf</span>
-                  <p style="margin-top: 8px; font-size:13px; color: var(--text-muted);">Selecciona el PDF firmado del contrato</p>
+                <div id="pdf-wrapper" style="
+                  display: flex; align-items: center; gap: 16px;
+                  border: 2px dashed #cbd5e1; border-radius: 10px;
+                  padding: 18px 24px; cursor: pointer;
+                  background: #f8fafc; transition: border-color .2s, background .2s;
+                " onmouseenter="this.style.borderColor='var(--primary)';this.style.background='#eff6ff';"
+                   onmouseleave="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc';">
+                  <span class="material-icons-round" style="font-size:32px; color:#94a3b8;">attach_file</span>
+                  <div>
+                    <div id="pdf-label-main" style="font-size:14px; font-weight:600; color:#374151;">Seleccionar archivo PDF</div>
+                    <div id="pdf-label-sub" style="font-size:12px; color:var(--text-muted); margin-top:2px;">Haz clic para adjuntar el contrato firmado</div>
+                  </div>
                   <input type="file" id="c-pdf" accept=".pdf" style="display: none;">
                 </div>
-                <p id="pdf-selected-name" style="margin-top: 10px; font-size: 13px; color: var(--accent-green); text-align: center; font-weight: 600;"></p>
               </div>
 
-              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 30px; padding: 14px; font-size:15px;">
-                Guardar Contrato Nuevo
-              </button>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:28px; padding-top:20px; border-top:1px solid var(--border-color);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:12px; font-weight:700; letter-spacing:.05em; color:#374151;">ESTATUS INICIAL:</span>
+                  <span style="
+                    background: #dcfce7; color: #16a34a;
+                    border: 1px solid #86efac;
+                    border-radius: 999px; padding: 3px 14px;
+                    font-size: 13px; font-weight: 700;
+                    display:inline-flex; align-items:center; gap:5px;
+                  ">
+                    <span class="material-icons-round" style="font-size:14px;">check_circle</span>
+                    Vigente
+                  </span>
+                  <span style="font-size:12px; color:var(--text-muted);">(se asigna automáticamente)</span>
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding: 12px 32px; font-size:15px; font-weight:700;">
+                  <span class="material-icons-round" style="font-size:16px;">save</span>
+                  Registrar Contrato
+                </button>
+              </div>
             </form>
           </div>
         `;
 
         const wrapper = document.getElementById('pdf-wrapper');
         const fileInput = document.getElementById('c-pdf');
-        const selectedName = document.getElementById('pdf-selected-name');
 
         wrapper.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', () => {
           if (fileInput.files.length > 0) {
-            selectedName.textContent = `Archivo seleccionado: ${fileInput.files[0].name}`;
+            const name = fileInput.files[0].name;
+            document.getElementById('pdf-label-main').textContent = name;
+            document.getElementById('pdf-label-main').style.color = 'var(--accent-green)';
+            document.getElementById('pdf-label-sub').textContent = 'PDF seleccionado · haz clic para cambiar';
+            wrapper.style.borderColor = 'var(--accent-green)';
           }
         });
 
@@ -228,13 +312,19 @@
           const el = document.getElementById(id);
           if (el) el.addEventListener('input', () => app.refreshAltaDerivedValues());
         });
+        // Formatear inicialmente si tiene valores
+        const montoEl = document.getElementById('c-monto');
+        if (montoEl && montoEl.value) {
+          montoEl.value = app.formatNumberWithCommas(montoEl.value);
+        }
         this.refreshAltaDerivedValues();
       } catch (e) {}
     },
 
     // CALCULAR VALORES DERIVADOS: Recalcula automáticamente montos de garantías sugeridas y el plan de amortización mensual.
     refreshAltaDerivedValues() {
-      const monto = parseFloat(document.getElementById('c-monto')?.value || 0);
+      const rawMonto = document.getElementById('c-monto')?.value || '';
+      const monto = parseFloat(rawMonto.replace(/,/g, '') || 0);
       const anticipo = parseFloat(document.getElementById('c-anticipo')?.value || 30);
       const plazo = parseInt(document.getElementById('c-plazo')?.value || 0, 10);
       const anticipoMonto = monto * (anticipo / 100);
@@ -244,9 +334,9 @@
       const garAnticipo = document.getElementById('gar-anticipo');
       const garCumplimiento = document.getElementById('gar-cumplimiento');
       const garVicios = document.getElementById('gar-vicios');
-      if (garAnticipo && !garAnticipo.dataset.touched) garAnticipo.value = anticipoMonto ? anticipoMonto.toFixed(2) : '';
-      if (garCumplimiento && !garCumplimiento.dataset.touched) garCumplimiento.value = cumplimientoMonto ? cumplimientoMonto.toFixed(2) : '';
-      if (garVicios && !garVicios.dataset.touched) garVicios.value = cumplimientoMonto ? cumplimientoMonto.toFixed(2) : '';
+      if (garAnticipo && !garAnticipo.dataset.touched) garAnticipo.value = anticipoMonto ? app.formatNumberWithCommas(anticipoMonto.toFixed(2)) : '';
+      if (garCumplimiento && !garCumplimiento.dataset.touched) garCumplimiento.value = cumplimientoMonto ? app.formatNumberWithCommas(cumplimientoMonto.toFixed(2)) : '';
+      if (garVicios && !garVicios.dataset.touched) garVicios.value = cumplimientoMonto ? app.formatNumberWithCommas(cumplimientoMonto.toFixed(2)) : '';
 
       document.querySelectorAll('.gar-monto').forEach(input => {
         input.addEventListener('input', () => { input.dataset.touched = 'true'; }, { once: true });
@@ -349,27 +439,95 @@
       const tbody = document.querySelector('#catalogo-table tbody');
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td><input type="text" class="cat-clave" placeholder="CON-0X" required style="padding: 6px;"></td>
-        <td><input type="text" class="cat-desc" placeholder="Descripción" required style="padding: 6px;"></td>
-        <td><input type="text" class="cat-unidad" placeholder="m2" required style="padding: 6px;"></td>
-        <td><input type="number" class="cat-cantidad" placeholder="0" required style="padding: 6px;" onchange="app.recalcCatImportes()"></td>
-        <td><input type="number" class="cat-precio" placeholder="0" required style="padding: 6px;" onchange="app.recalcCatImportes()"></td>
-        <td class="cat-importe">$0.00</td>
+        <td><input type="text" class="cat-clave" placeholder="CON-0X" required style="width:100%; padding:6px; box-sizing:border-box;"></td>
+        <td><input type="text" class="cat-desc" placeholder="Descripción del concepto" required style="width:100%; padding:6px; box-sizing:border-box;"></td>
+        <td><input type="text" class="cat-unidad" placeholder="m2" required style="width:100%; padding:6px; box-sizing:border-box;"></td>
+        <td><input type="number" class="cat-cantidad" placeholder="0" required style="width:100%; padding:6px; box-sizing:border-box;" oninput="app.recalcCatImportes()"></td>
+        <td><input type="number" class="cat-precio" placeholder="0" required style="width:100%; padding:6px; box-sizing:border-box;" oninput="app.recalcCatImportes()"></td>
+        <td class="cat-importe" style="text-align:right; font-weight:600; white-space:nowrap; padding-right:8px;">$0.00</td>
       `;
       tbody.appendChild(row);
       this.renderProgramaCaptura();
     },
 
-    // RECALCULAR IMPORTES: Multiplica cantidad por precio unitario por fila en la tabla del catálogo.
+    // Sumar importes del catálogo y actualizar el monto total
     recalcCatImportes() {
       const rows = document.querySelectorAll('#catalogo-table tbody tr');
+      let totalSum = 0;
       rows.forEach(r => {
-        const qty = parseFloat(r.querySelector('.cat-cantidad').value || 0);
-        const prc = parseFloat(r.querySelector('.cat-precio').value || 0);
+        const qty = parseFloat(r.querySelector('.cat-cantidad')?.value || 0);
+        const prc = parseFloat(r.querySelector('.cat-precio')?.value || 0);
         const imp = qty * prc;
-        r.querySelector('.cat-importe').textContent = `$${imp.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        totalSum += imp;
+        const cell = r.querySelector('.cat-importe');
+        if (cell) {
+          cell.textContent = `$${imp.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          cell.style.textAlign = 'right';
+          cell.style.fontWeight = '600';
+          cell.style.whiteSpace = 'nowrap';
+          cell.style.paddingRight = '8px';
+        }
       });
+
+      const cMontoInput = document.getElementById('c-monto');
+      if (cMontoInput) {
+        cMontoInput.value = this.formatNumberWithCommas(totalSum.toFixed(2));
+      }
+
       this.renderProgramaCaptura();
+      this.refreshAltaDerivedValues();
+    },
+
+    // AGREGAR DEPENDENCIA DESDE FORMULARIO DE CONTRATO: Abre el modal y, al guardar, recarga el select y selecciona el nuevo registro.
+    altaContratNuevaDep() {
+      this.openNuevaDependenciaModal(async (dep) => {
+        const lista = await this.loadDependenciasOpts();
+        const sel = document.getElementById('c-dependencia');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Selecciona una dependencia...</option>' +
+          lista.map(d => `<option value="${d.id}"${d.id === dep.id ? ' selected' : ''}>${d.nombre}${d.siglas ? ' — ' + d.siglas : ''}</option>`).join('');
+      });
+    },
+
+    // AGREGAR EMPRESA DESDE FORMULARIO DE CONTRATO: Abre el modal y, al guardar, recarga el select y selecciona el nuevo registro.
+    altaContratNuevaEmp() {
+      this.openNuevaEmpresaModal(async (emp) => {
+        const lista = await this.loadEmpresasOpts();
+        const sel = document.getElementById('c-empresa');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Selecciona una empresa...</option>' +
+          lista.map(e => `<option value="${e.id}"${e.id === emp.id ? ' selected' : ''}>${e.nombre_comercial}${e.razon_social ? ' — ' + e.razon_social.toUpperCase() : ''}</option>`).join('');
+      });
+    },
+
+    // Helper de formateo de moneda con comas
+    formatNumberWithCommas(value) {
+      let clean = value.replace(/[^0-9.]/g, '');
+      const dotIndex = clean.indexOf('.');
+      if (dotIndex !== -1) {
+        clean = clean.substring(0, dotIndex + 1) + clean.substring(dotIndex + 1).replace(/\./g, '');
+      }
+      const parts = clean.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      if (parts[1]) {
+        parts[1] = parts[1].substring(0, 2);
+      }
+      return parts.join('.');
+    },
+
+    handleMontoInput() {
+      const input = document.getElementById('c-monto');
+      if (input) {
+        input.value = this.formatNumberWithCommas(input.value);
+      }
+      this.refreshAltaDerivedValues();
+    },
+
+    handleGarMontoInput(input) {
+      if (input) {
+        input.value = this.formatNumberWithCommas(input.value);
+        input.dataset.touched = 'true';
+      }
     },
 
     // GUARDAR CONTRATO: Envía todo el FormData (incluyendo archivo PDF, catálogo, programa y garantías) al backend.
@@ -377,7 +535,9 @@
       const formData = new FormData();
       formData.append('folio', document.getElementById('c-folio').value);
       formData.append('objeto', document.getElementById('c-objeto').value);
-      formData.append('monto', document.getElementById('c-monto').value);
+      
+      const rawMonto = document.getElementById('c-monto').value || '';
+      formData.append('monto', rawMonto.replace(/,/g, ''));
       formData.append('anticipo_porcentaje', document.getElementById('c-anticipo').value);
       formData.append('plazo_dias', document.getElementById('c-plazo').value);
       formData.append('fecha_inicio', document.getElementById('c-inicio').value);
@@ -385,10 +545,22 @@
       formData.append('residente_id', document.getElementById('c-residente').value);
       formData.append('superintendente_id', document.getElementById('c-contratista').value);
       formData.append('supervision_id', document.getElementById('c-supervision').value);
+      formData.append('dependencia_id', document.getElementById('c-dependencia')?.value || '');
+      formData.append('empresa_id', document.getElementById('c-empresa')?.value || '');
 
       const pdfInput = document.getElementById('c-pdf');
       if (pdfInput.files.length > 0) {
         formData.append('pdf_contrato', pdfInput.files[0]);
+      }
+
+      const jurDepFileInput = document.getElementById('c-jur-dep-file');
+      if (jurDepFileInput && jurDepFileInput.files.length > 0) {
+        formData.append('jur_dep_file', jurDepFileInput.files[0]);
+      }
+
+      const jurContFileInput = document.getElementById('c-jur-cont-file');
+      if (jurContFileInput && jurContFileInput.files.length > 0) {
+        formData.append('jur_cont_file', jurContFileInput.files[0]);
       }
 
       const catalogo = [];
@@ -417,16 +589,18 @@
 
       const garantias = [];
       document.querySelectorAll('#garantias-table tbody tr').forEach(row => {
+        const rawGarMonto = row.querySelector('.gar-monto').value || '';
         garantias.push({
           tipo: row.dataset.tipo,
           afianzadora: row.querySelector('.gar-afianzadora').value,
           vigencia: row.querySelector('.gar-vigencia').value,
-          monto: parseFloat(row.querySelector('.gar-monto').value || 0)
+          monto: parseFloat(rawGarMonto.replace(/,/g, '') || 0)
         });
       });
       formData.append('garantias', JSON.stringify(garantias));
 
-      const monto = parseFloat(document.getElementById('c-monto').value || 0);
+      const rawMontoDec = document.getElementById('c-monto').value || '';
+      const monto = parseFloat(rawMontoDec.replace(/,/g, '') || 0);
       const anticipo = parseFloat(document.getElementById('c-anticipo').value || 30);
       const anticipoMonto = monto * (anticipo / 100);
       const amortizacionPlan = [];

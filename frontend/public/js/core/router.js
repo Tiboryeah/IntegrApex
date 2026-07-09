@@ -89,6 +89,8 @@
       await this.renderTableroEstimaciones();
     } else if (screen === 'portafolio-ejecutivo') {
       await this.renderPortafolioEjecutivo();
+    } else if (screen === 'catalogo-banco') {
+      await this.renderCatalogoBanco();
     }
   },
 
@@ -105,7 +107,8 @@
       '/admin/solicitudes': { screen: 'admin-approvals', params: {} },
       '/bitacora/por-firmar': { screen: 'por-firmar-bandeja', params: {} },
       '/estimaciones/tablero': { screen: 'tablero-estimaciones', params: {} },
-      '/portafolio': { screen: 'portafolio-ejecutivo', params: {} }
+      '/portafolio': { screen: 'portafolio-ejecutivo', params: {} },
+      '/catalogo': { screen: 'catalogo-banco', params: {} }
     };
 
     if (routes[path]) return routes[path];
@@ -125,7 +128,8 @@
       'admin-approvals': '/admin/solicitudes',
       'por-firmar-bandeja': '/bitacora/por-firmar',
       'tablero-estimaciones': '/estimaciones/tablero',
-      'portafolio-ejecutivo': '/portafolio'
+      'portafolio-ejecutivo': '/portafolio',
+      'catalogo-banco': '/catalogo'
     };
 
     if (screen === 'contract-detail' && params.id) {

@@ -148,46 +148,67 @@ teams.forEach(t => {
   });
 });
 
-class JsonStore {
+class SqliteStore {
   constructor() {
-    this.data = null;
-    this.read();
+    const Database = require('better-sqlite3');
+    const isTest = process.env.NODE_ENV === 'test';
+    const SQLITE_DB_PATH = isTest ? ':memory:' : path.join(dataDir, 'integrapex.db');
+    
+    this.db = new Database(SQLITE_DB_PATH);
+    this.initDatabase();
+    this.migrateIfNeeded();
   }
 
-  read() {
-    try {
+  initDatabase() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS document_store (
+        id TEXT PRIMARY KEY,
+        collection_name TEXT NOT NULL,
+        data TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_collection ON document_store(collection_name);
+    `);
+  }
+
+  migrateIfNeeded() {
+    const rowCount = this.db.prepare("SELECT COUNT(*) as count FROM document_store").get();
+    if (rowCount.count === 0) {
+      console.log("SQLite document_store is empty. Checking for db.json migration...");
+      let sourceData = initialState;
       if (fs.existsSync(DB_PATH)) {
-        const raw = fs.readFileSync(DB_PATH, 'utf8');
-        this.data = JSON.parse(raw);
-        Object.keys(initialState).forEach(key => {
-          if (!this.data[key]) this.data[key] = [];
-        });
+        try {
+          const raw = fs.readFileSync(DB_PATH, 'utf8');
+          sourceData = JSON.parse(raw);
+          console.log("Found existing db.json. Migrating data to SQLite...");
+        } catch (e) {
+          console.error("Failed to parse db.json, fallback to initialState", e);
+        }
       } else {
-        this.data = initialState;
-        this.write();
+        console.log("No db.json found, loading initialState into SQLite...");
       }
-    } catch (e) {
-      console.error("Error reading database file:", e);
-      this.data = initialState;
-    }
-  }
 
-  write() {
-    try {
-      fs.writeFileSync(DB_PATH, JSON.stringify(this.data, null, 2), 'utf8');
-    } catch (e) {
-      console.error("Error writing database file:", e);
+      const insertStmt = this.db.prepare("INSERT INTO document_store (id, collection_name, data) VALUES (?, ?, ?)");
+      const transaction = this.db.transaction((dataObj) => {
+        Object.entries(dataObj).forEach(([collectionName, records]) => {
+          if (Array.isArray(records)) {
+            records.forEach(record => {
+              if (!record.id) {
+                record.id = `${collectionName.substring(0,3)}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+              }
+              insertStmt.run(record.id, collectionName, JSON.stringify(record));
+            });
+          }
+        });
+      });
+      transaction(sourceData);
+      console.log("Migration to SQLite completed successfully.");
     }
   }
 
   getCollection(name) {
-    this.read();
-    return this.data[name] || [];
-  }
-
-  saveCollection(name, list) {
-    this.data[name] = list;
-    this.write();
+    const stmt = this.db.prepare("SELECT data FROM document_store WHERE collection_name = ?");
+    const rows = stmt.all(name);
+    return rows.map(r => JSON.parse(r.data));
   }
 
   find(collectionName, queryFn) {
@@ -201,31 +222,31 @@ class JsonStore {
   }
 
   insert(collectionName, record) {
-    const list = this.getCollection(collectionName);
     const id = record.id || `${collectionName.substring(0,3)}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const newRecord = { id, ...record };
-    list.push(newRecord);
-    this.saveCollection(collectionName, list);
+    const stmt = this.db.prepare("INSERT INTO document_store (id, collection_name, data) VALUES (?, ?, ?)");
+    stmt.run(id, collectionName, JSON.stringify(newRecord));
     return newRecord;
   }
 
   update(collectionName, id, updates) {
-    const list = this.getCollection(collectionName);
-    const idx = list.findIndex(r => r.id === id);
-    if (idx !== -1) {
-      list[idx] = { ...list[idx], ...updates };
-      this.saveCollection(collectionName, list);
-      return list[idx];
+    const selectStmt = this.db.prepare("SELECT data FROM document_store WHERE id = ? AND collection_name = ?");
+    const row = selectStmt.get(id, collectionName);
+    if (row) {
+      const current = JSON.parse(row.data);
+      const updated = { ...current, ...updates };
+      const updateStmt = this.db.prepare("UPDATE document_store SET data = ? WHERE id = ? AND collection_name = ?");
+      updateStmt.run(JSON.stringify(updated), id, collectionName);
+      return updated;
     }
     return null;
   }
 
   delete(collectionName, id) {
-    const list = this.getCollection(collectionName);
-    const filtered = list.filter(r => r.id !== id);
-    this.saveCollection(collectionName, filtered);
+    const stmt = this.db.prepare("DELETE FROM document_store WHERE id = ? AND collection_name = ?");
+    stmt.run(id, collectionName);
     return true;
   }
 }
 
-module.exports = new JsonStore();
+module.exports = new SqliteStore();

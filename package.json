@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "playwright": "^1.61.1"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
   }
 }

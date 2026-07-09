@@ -130,4 +130,71 @@ router.post('/admin/approve', authenticate, authorizeRoles('dependencia'), (req,
   }
 });
 
+// Listar todos los usuarios (Dependencia)
+router.get('/admin/usuarios', authenticate, authorizeRoles('dependencia'), (req, res) => {
+  const todos = store.getCollection('usuarios').map(u => ({
+    id: u.id,
+    email: u.email,
+    nombre: u.nombre,
+    rol: u.rol,
+    estado: u.estado,
+    telefono: u.telefono || null,
+    cargo: u.cargo || null,
+    titulo: u.titulo || null,
+    especialidad: u.especialidad || null,
+    cedula: u.cedula || null,
+    nss: u.nss || null,
+    empresa_id: u.empresa_id || null,
+    dependencia_id: u.dependencia_id || null,
+    notas: u.notas || null,
+    foto_url: u.foto_url || null,
+    creado_en: u.creado_en || null
+  }));
+  return res.json(todos);
+});
+
+// Crear usuario directamente (Dependencia) — queda aprobado de inmediato
+router.post('/admin/usuarios', authenticate, authorizeRoles('dependencia'), (req, res) => {
+  const { email, password, nombre, rol, telefono, cargo, titulo, especialidad, cedula, nss, empresa_id, dependencia_id, notas } = req.body;
+
+  if (!email || !password || !nombre || !rol) {
+    return res.status(400).json({ error: 'Nombre, correo, contraseña y rol son obligatorios' });
+  }
+
+  const existe = store.findOne('usuarios', u => u.email === email.trim().toLowerCase());
+  if (existe) {
+    return res.status(400).json({ error: `El correo ${email} ya está registrado` });
+  }
+
+  const rolesValidos = ['residente', 'contratista', 'supervision', 'dependencia', 'finanzas'];
+  if (!rolesValidos.includes(rol)) {
+    return res.status(400).json({ error: 'Rol no válido' });
+  }
+
+  const nuevo = store.insert('usuarios', {
+    email: email.trim().toLowerCase(),
+    contrasena: password,
+    nombre: nombre.trim(),
+    rol,
+    estado: 'aprobado',
+    telefono: (telefono || '').trim(),
+    cargo: (cargo || '').trim(),
+    titulo: (titulo || '').trim(),
+    especialidad: (especialidad || '').trim(),
+    cedula: (cedula || '').trim(),
+    nss: (nss || '').trim(),
+    empresa_id: empresa_id || null,
+    dependencia_id: dependencia_id || null,
+    notas: (notas || '').trim(),
+    aprobado_por: req.user.nombre,
+    aprobado_en: new Date().toISOString(),
+    creado_en: new Date().toISOString()
+  });
+
+  return res.status(201).json({
+    message: 'Usuario creado con éxito',
+    user: { id: nuevo.id, email: nuevo.email, nombre: nuevo.nombre, rol: nuevo.rol, estado: nuevo.estado }
+  });
+});
+
 module.exports = router;

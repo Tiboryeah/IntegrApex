@@ -91,6 +91,9 @@
           <span class="item-left"><span class="material-icons-round">edit_note</span><span>Convenios</span></span>
           <span class="hu-tag">HU-03</span>
         </a>
+        <a class="sidebar-menu-item" data-screen="catalogo-banco" onclick="app.navigate('catalogo-banco')">
+          <span class="item-left"><span class="material-icons-round">category</span><span>Banco de Catálogos</span></span>
+        </a>
       `;
     }
     else if (rol === 'dependencia') {
@@ -110,6 +113,9 @@
         <a class="sidebar-menu-item" onclick="app.openContractModule('convenios')">
           <span class="item-left"><span class="material-icons-round">edit_note</span><span>Convenios</span></span>
           <span class="hu-tag">HU-03</span>
+        </a>
+        <a class="sidebar-menu-item" data-screen="catalogo-banco" onclick="app.navigate('catalogo-banco')">
+          <span class="item-left"><span class="material-icons-round">category</span><span>Banco de Catálogos</span></span>
         </a>
       `;
     }
@@ -157,8 +163,7 @@
       html += `
         <div class="sidebar-section-title">Administración</div>
         <a class="sidebar-menu-item" data-screen="admin-approvals" onclick="app.navigate('admin-approvals')">
-          <span class="item-left"><span class="material-icons-round">how_to_reg</span><span>Solicitudes de registro</span></span>
-          <span class="hu-tag">Registro</span>
+          <span class="item-left"><span class="material-icons-round">manage_accounts</span><span>Gestión de Usuarios</span></span>
         </a>
       `;
     }

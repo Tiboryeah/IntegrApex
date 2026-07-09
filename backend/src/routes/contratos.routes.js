@@ -14,7 +14,11 @@ const {
 const router = express.Router();
 
 // Alta de contratos (HU-01)
-router.post('/contratos', authenticate, authorizeRoles('residente'), upload.single('pdf_contrato'), (req, res) => {
+router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fields([
+  { name: 'pdf_contrato', maxCount: 1 },
+  { name: 'jur_dep_file', maxCount: 1 },
+  { name: 'jur_cont_file', maxCount: 1 }
+]), (req, res) => {
   let {
     folio,
     objeto,
@@ -99,9 +103,17 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.sing
     ? amortizacion_plan.map(p => ({ periodo: parseInt(p.periodo, 10), porcentaje: normalizeMoney(p.porcentaje), monto: normalizeMoney(p.monto) }))
     : buildAmortizacionPlan(subtotal, ant_pct, plazo_dias);
 
+  const filesMap = req.files || {};
+  const pdfFile = filesMap['pdf_contrato']?.[0];
+  const jurDepFile = filesMap['jur_dep_file']?.[0];
+  const jurContFile = filesMap['jur_cont_file']?.[0];
+
   const newContract = store.insert('contratos', {
     folio,
     objeto,
+    estado: 'vigente',
+    dependencia_id: req.body.dependencia_id || null,
+    empresa_id: req.body.empresa_id || null,
     monto: subtotal,
     anticipo_porcentaje: ant_pct,
     anticipo_monto: ant_monto,
@@ -112,13 +124,15 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.sing
     residente_id,
     superintendente_id,
     supervision_id,
-    pdf_contrato: req.file ? `/uploads/${req.file.filename}` : null,
-    pdf_contrato_inmutable: Boolean(req.file),
+    pdf_contrato: pdfFile ? `/uploads/${pdfFile.filename}` : null,
+    pdf_contrato_inmutable: Boolean(pdfFile),
     catalogo,
     programa,
     juridicos: {
       dependencia: juridicos.dependencia || "",
+      dependencia_path: jurDepFile ? `/uploads/${jurDepFile.filename}` : null,
       contratista: juridicos.contratista || "",
+      contratista_path: jurContFile ? `/uploads/${jurContFile.filename}` : null,
       fundamento_legal: juridicos.fundamento_legal || "LOPSRM / RLOPSRM"
     },
     garantias: garantias.map(g => ({
@@ -140,12 +154,38 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.sing
     creado_en: new Date().toISOString()
   });
 
-  if (req.file) {
+  if (pdfFile) {
     store.insert('documentos', {
       contrato_id: newContract.id,
       tipo: 'contrato_firmado',
-      nombre: req.file.originalname,
-      path: `/uploads/${req.file.filename}`,
+      nombre: pdfFile.originalname,
+      path: `/uploads/${pdfFile.filename}`,
+      inmutable: true,
+      creado_por_id: req.user.id,
+      creado_por_nombre: req.user.nombre,
+      creado_en: new Date().toISOString()
+    });
+  }
+
+  if (jurDepFile) {
+    store.insert('documentos', {
+      contrato_id: newContract.id,
+      tipo: 'elementos_dependencia',
+      nombre: jurDepFile.originalname,
+      path: `/uploads/${jurDepFile.filename}`,
+      inmutable: true,
+      creado_por_id: req.user.id,
+      creado_por_nombre: req.user.nombre,
+      creado_en: new Date().toISOString()
+    });
+  }
+
+  if (jurContFile) {
+    store.insert('documentos', {
+      contrato_id: newContract.id,
+      tipo: 'elementos_contratista',
+      nombre: jurContFile.originalname,
+      path: `/uploads/${jurContFile.filename}`,
       inmutable: true,
       creado_por_id: req.user.id,
       creado_por_nombre: req.user.nombre,

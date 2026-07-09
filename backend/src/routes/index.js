@@ -15,5 +15,6 @@ router.use(require('./reportes.routes'));
 router.use(require('./pagos.routes'));
 router.use(require('./alertas.routes'));
 router.use(require('./notificaciones.routes'));
+router.use(require('./catalogo.routes'));
 
 module.exports = router;
