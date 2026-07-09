@@ -114,3 +114,21 @@ Verificado en navegador (12/12): campana con contador real (3 notificaciones por
 Las 24 historias de usuario del Excel están en estado **Cumple**. El núcleo transaccional (contratos, fianzas, convenios, bitácora, programa, trabajos por periodo, integración/pago de estimaciones) funciona y está modularizado por dominio en backend (`src/routes/`) y frontend (`js/modules/`). La capa de "evidencia y trazabilidad legal" alrededor de ese núcleo también es real: notificaciones visibles en una campana propia (no solo registros invisibles en la base de datos), semáforos de plazo calculados contra fechas reales, exportaciones reales (XLSX/PDF), alertas de vencimiento y de atraso disparadas por eventos reales (no heurísticas de UI), y búsqueda/descarga documental con lógica AND.
 
 Dos decisiones de diseño quedan anotadas por transparencia, sin que bloqueen ningún criterio de aceptación: (a) el expediente de HU-04 presenta sus 5 bloques repartidos en pestañas en vez de una sola vista continua — el buscador global sí los cruza a todos; (b) el canal "correo" de HU-07 entrega a un buzón simulado dentro de la app (`correos_salientes`) en vez de una bandeja SMTP real, para no depender de credenciales externas no provistas por el usuario.
+
+## Verificación Automatizada Reproducible
+
+Se agregó una suite local en `tests/run-integrapex-tests.js` para reemplazar los scripts efímeros de Playwright usados durante los bloques previos. La suite reinicia `backend/data/db.json`, levanta el backend en un puerto de prueba, valida la SPA en Chromium y recorre por API real los flujos críticos de las HU.
+
+Comandos:
+
+```powershell
+npm.cmd test
+npm.cmd run test:smoke
+npm.cmd run test:hu -- HU-12
+```
+
+Última corrida local: `npm.cmd test` pasó 3/3 pruebas:
+
+- `SMOKE roles y rutas criticas en Chromium`.
+- `HU-00 Registro control de acceso por rol`.
+- `Por Firmar HU-01..HU-21 flujo funcional completo por API`.

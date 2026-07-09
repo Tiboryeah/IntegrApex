@@ -3,7 +3,7 @@
 
   window.IntegrApexModules.contratos = {
     // ==========================================
-    // ALTA DE CONTRATOS SCREEN (HU-01)
+    // Pantalla de alta de contratos (HU-01).
     // ==========================================
     async renderAltaContrato() {
       const outlet = document.getElementById('app-router-outlet');
@@ -75,19 +75,19 @@
                   <select id="c-contratista" required>${conOpts}</select>
                 </div>
                 <div class="col-4 form-group">
-                  <label>Supervisor Tecnico</label>
+                  <label>Supervisor técnico</label>
                   <select id="c-supervision">${supOpts}</select>
                 </div>
               </div>
 
-              <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">3. Catalogo de Conceptos</h2>
+              <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">3. Catálogo de conceptos</h2>
               <div style="margin-bottom: 20px;">
                 <div class="table-container">
                   <table id="catalogo-table">
                     <thead>
                       <tr>
                         <th>Clave</th>
-                        <th>Descripcion</th>
+                        <th>Descripción</th>
                         <th>Unidad</th>
                         <th>Cantidad</th>
                         <th>P. Unitario</th>
@@ -135,7 +135,7 @@
                 </div>
               </div>
 
-              <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">6. Garantias Iniciales</h2>
+              <h2 style="font-size:16px; margin-top:20px; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px; color:var(--primary);">6. Garantías iniciales</h2>
               <div class="table-container" style="margin-bottom:18px;">
                 <table id="garantias-table">
                   <thead>
@@ -344,7 +344,7 @@
       const row = document.createElement('tr');
       row.innerHTML = `
         <td><input type="text" class="cat-clave" placeholder="CON-0X" required style="padding: 6px;"></td>
-        <td><input type="text" class="cat-desc" placeholder="Descripcion" required style="padding: 6px;"></td>
+        <td><input type="text" class="cat-desc" placeholder="Descripción" required style="padding: 6px;"></td>
         <td><input type="text" class="cat-unidad" placeholder="m2" required style="padding: 6px;"></td>
         <td><input type="number" class="cat-cantidad" placeholder="0" required style="padding: 6px;" onchange="app.recalcCatImportes()"></td>
         <td><input type="number" class="cat-precio" placeholder="0" required style="padding: 6px;" onchange="app.recalcCatImportes()"></td>
@@ -455,7 +455,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
 
-        this.showToast('Contrato registrado con exito', 'success');
+        this.showToast('Contrato registrado con éxito', 'success');
         this.navigate('contracts-dashboard');
       } catch (e) {
         this.showToast(e.message, 'error');

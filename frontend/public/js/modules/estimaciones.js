@@ -3,7 +3,7 @@
 
   window.IntegrApexModules.estimaciones = {
     // ==========================================
-    // TABLERO DE ESTIMACIONES ACTIVAS (HU-17)
+    // Tablero de estimaciones activas (HU-17).
     // ==========================================
     async renderTableroEstimaciones() {
       this.showLoggedInUI();
@@ -15,7 +15,7 @@
 
         const estadoLabel = {
           presentada: 'Presentada',
-          en_revision: 'En revision',
+          en_revision: 'En revisión',
           autorizada: 'Autorizada',
           en_pago: 'En pago',
           pagada: 'Pagada'
@@ -71,7 +71,7 @@
                 <td>${money(e.monto)}</td>
                 <td>${e.dias_transcurridos} dia(s)</td>
                 <td>${filaLineaTiempo(e.linea_tiempo)}</td>
-                <td>${e.requiere_mi_accion ? '<span class="badge badge-rejected">Requiere mi accion</span>' : '-'}</td>
+                <td>${e.requiere_mi_accion ? '<span class="badge badge-rejected">Requiere mi acción</span>' : '-'}</td>
               </tr>
             `).join('');
 
@@ -90,7 +90,7 @@
 
             <div class="glass-panel" style="margin-bottom:20px;">
               <h2>Mis Pendientes</h2>
-              <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px; margin-bottom:8px;">Estimaciones que requieren accion de tu rol (${this.state.user.rol}) ahora mismo.</p>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px; margin-bottom:8px;">Estimaciones que requieren acción de tu rol (${this.state.user.rol}) ahora mismo.</p>
               <div>${pendientesHtml}</div>
             </div>
 
@@ -106,7 +106,7 @@
                       <th>Monto</th>
                       <th>Dias transcurridos</th>
                       <th>Linea de tiempo</th>
-                      <th>Accion requerida</th>
+                      <th>Acción requerida</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -127,7 +127,7 @@
     },
 
     // ==========================================
-    // RENDER ESTIMACIONES MODULE (HU-12 a HU-16)
+    // Módulo de estimaciones (HU-12 a HU-16).
     // ==========================================
     async renderEstimacionesScreen() {
       const outlet = document.getElementById('app-router-outlet');
@@ -175,7 +175,7 @@
         if (this.state.user.rol === 'contratista') {
           actions = `
             <button class="btn btn-primary" onclick="app.integrarEstimacionForm()">
-              <span class="material-icons-round">add</span> Integrar Estimacion
+              <span class="material-icons-round">add</span> Integrar estimación
             </button>
           `;
         }
@@ -208,7 +208,7 @@
                     <option value="">Todos</option>
                     <option value="borrador" ${filterEstado === 'borrador' ? 'selected' : ''}>Borrador</option>
                     <option value="presentada" ${filterEstado === 'presentada' ? 'selected' : ''}>Presentada</option>
-                    <option value="en_revision" ${filterEstado === 'en_revision' ? 'selected' : ''}>En revision</option>
+                    <option value="en_revision" ${filterEstado === 'en_revision' ? 'selected' : ''}>En revisión</option>
                     <option value="autorizada" ${filterEstado === 'autorizada' ? 'selected' : ''}>Autorizada</option>
                     <option value="rechazada" ${filterEstado === 'rechazada' ? 'selected' : ''}>Rechazada</option>
                     <option value="en_pago" ${filterEstado === 'en_pago' ? 'selected' : ''}>En pago</option>
@@ -230,7 +230,7 @@
                       <th>Lquido Net.</th>
                       <th>Estatus</th>
                       <th>Plazo Legal</th>
-                      <th>Accion</th>
+                      <th>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -272,9 +272,9 @@
       });
 
       this.showModal(`
-        <h2>Integrar Estimacion de Obra (HU-12)</h2>
+        <h2>Integrar estimación de obra (HU-12)</h2>
         <p style="margin-bottom: 16px; font-size:13px; color:var(--text-muted); line-height:1.4;">
-          De acuerdo con el Art. 132 RLOPSRM, asiente los generadores, el registro fotografico, los soportes y las notas de bitacora del periodo como un solo bloque. El sistema calcula retenciones del 5 al millar (Art. 191 LFD) y amortizacion.
+          De acuerdo con el Art. 132 RLOPSRM, asiente los generadores, el registro fotográfico, los soportes y las notas de bitácora del periodo como un solo bloque. El sistema calcula retenciones del 5 al millar (Art. 191 LFD) y amortización.
         </p>
         <form id="integrar-est-form" style="max-height: 70vh; overflow-y: auto; padding-right:10px;">
           <div class="dashboard-grid" style="gap:15px;">
@@ -309,7 +309,7 @@
               <input type="file" id="est-soportes" accept=".pdf" multiple>
             </div>
 
-            <div class="col-12"><h3 style="margin-top:10px; font-size:14px; color:var(--primary);">Notas de Bitacora Vinculadas (buscador HU-10)</h3></div>
+            <div class="col-12"><h3 style="margin-top:10px; font-size:14px; color:var(--primary);">Notas de bitácora vinculadas (buscador HU-10)</h3></div>
             <div class="col-4 form-group" style="margin-bottom:0;">
               <label>Tipo</label>
               <select id="est-notas-tipo">
@@ -318,7 +318,7 @@
                 <option value="Avance">Avance</option>
                 <option value="Solicitud">Solicitud</option>
                 <option value="Entrega">Entrega</option>
-                <option value="Autorizacion">Autorizacion</option>
+                <option value="Autorización">Autorización</option>
                 <option value="Incidencia">Incidencia</option>
               </select>
             </div>
@@ -335,7 +335,7 @@
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
             <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Integrar Estimacion</button>
+            <button type="submit" class="btn btn-primary">Integrar estimación</button>
           </div>
         </form>
       `);
@@ -405,7 +405,7 @@
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
-          this.showToast('Estimacion integrada en borrador con exito', 'success');
+          this.showToast('Estimación integrada en borrador con éxito', 'success');
           this.closeModal();
           this.renderEstimacionesScreen();
         } catch (err) {
@@ -447,9 +447,9 @@
 
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
-              <h3>Enviar Estimacion a Revision (HU-13)</h3>
-              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Debe adjuntar el PDF de generadores antes de enviar. El plazo de presentacin vence a los 6 dias naturales del periodo (Art. 54 LOPSRM): ${fechaLimiteEnvio.toLocaleDateString('es-MX')}.</p>
-              ${plazoVencido ? `<p style="font-size:13px; color:var(--accent-red); font-weight:600; margin-bottom:15px;">El plazo de 6 dias naturales para presentar esta estimacion ya vencio. No se puede enviar.</p>` : ''}
+              <h3>Enviar estimación a revisión (HU-13)</h3>
+              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Debe adjuntar el PDF de generadores antes de enviar. El plazo de presentación vence a los 6 días naturales del periodo (Art. 54 LOPSRM): ${fechaLimiteEnvio.toLocaleDateString('es-MX')}.</p>
+              ${plazoVencido ? `<p style="font-size:13px; color:var(--accent-red); font-weight:600; margin-bottom:15px;">El plazo de 6 días naturales para presentar esta estimación ya venció. No se puede enviar.</p>` : ''}
               <form id="send-est-form" style="display:flex; align-items:center; gap:20px;">
                 <input type="file" id="send-est-pdf" accept=".pdf" ${plazoVencido ? 'disabled' : 'required'} style="max-width:300px;">
                 <button type="submit" class="btn btn-primary" ${plazoVencido ? 'disabled' : ''}>Enviar formalmente</button>
@@ -462,7 +462,7 @@
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
               <h3>Revision Tecnica de Supervision (HU-15)</h3>
-              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Registre observaciones de revision antes de turnar la estimacion al Residente de Obra.</p>
+              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Registre observaciones de revisión antes de turnar la estimación al residente de obra.</p>
               <button class="btn btn-primary" onclick="app.turnarAResidenteDialog('${data.id}')">Turnar a Residencia</button>
             </div>
           `;
@@ -471,8 +471,8 @@
         if (this.state.user.rol === 'residente' && data.estado === 'presentada') {
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
-              <h3>Autorizacion del Residente de Obra (HU-15)</h3>
-              <p style="font-size:13px; color:var(--text-muted);">Esta estimacion todavia no ha sido turnada por Supervision. La residencia no puede autorizar ni rechazar hasta que Supervision la revise y la turne.</p>
+              <h3>Autorización del residente de obra (HU-15)</h3>
+              <p style="font-size:13px; color:var(--text-muted);">Esta estimación todavía no ha sido turnada por supervisión. La residencia no puede autorizar ni rechazar hasta que supervisión la revise y la turne.</p>
             </div>
           `;
         }
@@ -480,11 +480,11 @@
         if (this.state.user.rol === 'residente' && data.estado === 'en_revision') {
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
-              <h3>Autorizacion del Residente de Obra (HU-15)</h3>
-              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">El residente autoriza o rechaza formalmente la estimacion (Art. 53/54 LOPSRM).</p>
+              <h3>Autorización del residente de obra (HU-15)</h3>
+              <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">El residente autoriza o rechaza formalmente la estimación (Art. 53/54 LOPSRM).</p>
               <div style="display:flex; gap:10px;">
                 <button class="btn btn-primary" onclick="app.resolverEstimacion('${data.id}', 'autorizada')">Autorizar para Pago</button>
-                <button class="btn btn-secondary btn-danger" onclick="app.resolverEstimacion('${data.id}', 'rechazada')">Rechazar Estimacion</button>
+                <button class="btn btn-secondary btn-danger" onclick="app.resolverEstimacion('${data.id}', 'rechazada')">Rechazar estimación</button>
               </div>
             </div>
           `;
@@ -511,7 +511,7 @@
 
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
-              <h3>Estimacion Rechazada - Observaciones (HU-16)</h3>
+              <h3>Estimación rechazada - Observaciones (HU-16)</h3>
               <p style="margin-bottom:0; font-size:13px; color:var(--text-muted);">${data.comentario_residencia ? `Resolucion de residencia: ${data.comentario_residencia}` : 'Atienda las observaciones tecnicas antes de reingresar.'}</p>
               ${observacionesList}
               <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -530,11 +530,11 @@
         if ((this.state.user.rol === 'contratista' || this.state.user.rol === 'finanzas') && data.estado === 'autorizada') {
           actionPanel += `
             <div class="glass-panel" style="margin-top:20px;">
-              <h3>Transito a Pago y Suficiencia Presupuestal (HU-20)</h3>
+              <h3>Tránsito a pago y suficiencia presupuestal (HU-20)</h3>
               <p style="margin-bottom:15px; font-size:13px; color:var(--text-muted);">Verifique suficiencia presupuestal (Art. 24 LOPSRM) e ingrese factura/CFDI para generar la instruccin.</p>
               <div style="display:flex; gap:10px;">
                 <button class="btn btn-primary" onclick="app.verificarPresupuesto('${data.id}')">Verificar Suficiencia (Art. 24)</button>
-                <button class="btn btn-secondary" onclick="app.instruccionPagoDialog('${data.id}')">Cargar Factura / Generar Instruccin</button>
+                <button class="btn btn-secondary" onclick="app.instruccionPagoDialog('${data.id}')">Cargar factura / Generar instrucción</button>
               </div>
             </div>
           `;
@@ -568,8 +568,8 @@
           <div class="main-container" style="max-width: 900px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
               <div>
-                <span class="user-badge" style="background:#5c1e30; color:white; border:none;">Estimacion Periodo #${data.periodo_numero}</span>
-                <h1>Detalle y Liquidacion de Estimacion</h1>
+                <span class="user-badge" style="background:#5c1e30; color:white; border:none;">Estimación periodo #${data.periodo_numero}</span>
+                <h1>Detalle y liquidación de estimación</h1>
               </div>
               <button class="btn btn-secondary" onclick="app.renderEstimacionesScreen()">
                 <span class="material-icons-round">arrow_back</span> Regresar
@@ -577,11 +577,11 @@
             </div>
 
             <div class="glass-panel">
-              <h2>Caratula de Estimacion (Liquidacion)</h2>
+              <h2>Carátula de estimación (liquidación)</h2>
               <table style="width:100%; margin-top:16px;">
                 <tr><td style="color:var(--text-muted); font-weight:600; width:45%;">Estatus actual:</td><td><span class="badge badge-presented">${data.estado.toUpperCase()}</span></td></tr>
-                ${data.plazo_revision ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de revision (Art. 54 LOPSRM, 15 dias):</td><td>${this.renderPlazoBadge(data.plazo_revision)}</td></tr>` : ''}
-                ${data.plazo_pago ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de pago (Art. 54 LOPSRM, 20 dias):</td><td>${this.renderPlazoBadge(data.plazo_pago)}</td></tr>` : ''}
+                ${data.plazo_revision ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de revisión (Art. 54 LOPSRM, 15 días):</td><td>${this.renderPlazoBadge(data.plazo_revision)}</td></tr>` : ''}
+                ${data.plazo_pago ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de pago (Art. 54 LOPSRM, 20 días):</td><td>${this.renderPlazoBadge(data.plazo_pago)}</td></tr>` : ''}
                 <tr><td style="color:var(--text-muted); font-weight:600;">Importe de los Trabajos Ejecutados:</td><td>$${data.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
                 <tr><td style="color:var(--text-muted); font-weight:600;">Amortizacion del Anticipo (${contract.anticipo_porcentaje}%):</td><td style="color:var(--accent-red); font-weight:600;">- $${data.anticipo_amortizado.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
                 <tr><td style="color:var(--text-muted); font-weight:600;">Retencion 5 al millar (Vigilancia e Inspeccion, Art. 191 LFD):</td><td style="color:var(--accent-red); font-weight:600;">- $${data.retencion_5_millar.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
@@ -628,7 +628,7 @@
                   }
                 </div>
                 <div class="col-4">
-                  <h3>Notas de Bitacora Vinculadas</h3>
+                  <h3>Notas de bitácora vinculadas</h3>
                   ${notasVinculadas.length === 0
                     ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin notas vinculadas</p>'
                     : `<ul class="doc-list">${notasVinculadas.map(n => `<li>Nota #${n.folio} (${n.tipo})</li>`).join('')}</ul>`
@@ -655,7 +655,7 @@
               });
               const d = await res.json();
               if (!res.ok) throw new Error(d.error);
-              this.showToast('Estimacion enviada a revision', 'success');
+              this.showToast('Estimación enviada a revisión', 'success');
               this.viewEstimacionDetail(data.id);
             } catch(err) {
               this.showToast(err.message, 'error');
@@ -673,7 +673,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ resolucion, comentarios: "Resolucion del residente" })
         });
-        this.showToast(resolucion === 'autorizada' ? 'Estimacion autorizada' : 'Estimacion rechazada', 'success');
+        this.showToast(resolucion === 'autorizada' ? 'Estimación autorizada' : 'Estimación rechazada', 'success');
         this.viewEstimacionDetail(estId);
       } catch(e) {}
     },
@@ -737,7 +737,7 @@
       this.showModal(`
         <h2>Revision Tecnica por Seccion (HU-15)</h2>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-          Conforme al Art. 53 LOPSRM, revise la estimacion seccion por seccion (caratula, generadores, registro fotografico, soportes y notas) antes de turnarla a Residencia.
+          Conforme al Art. 53 LOPSRM, revise la estimación sección por sección (carátula, generadores, registro fotográfico, soportes y notas) antes de turnarla a residencia.
         </p>
         <form id="turn-est-form" style="max-height:60vh; overflow-y:auto; padding-right:10px;">
           <div id="turn-obs-rows">${this.filaObservacionRevisionHtml()}</div>
@@ -803,7 +803,7 @@
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
             <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Generar Instruccin</button>
+            <button type="submit" class="btn btn-primary">Generar instrucción</button>
           </div>
         </form>
       `);
@@ -822,7 +822,7 @@
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
 
-          this.showToast('Instruccin de pago enviada a Finanzas', 'success');
+          this.showToast('Instrucción de pago enviada a finanzas', 'success');
           this.closeModal();
           this.viewEstimacionDetail(estId);
         } catch(err) {
@@ -892,7 +892,7 @@
       });
 
       this.showModal(`
-        <h2>Reingresar Estimacion (HU-16)</h2>
+        <h2>Reingresar estimación (HU-16)</h2>
         <form id="reingresar-est-form" style="max-height: 70vh; overflow-y: auto; padding-right:10px; margin-top:16px;">
           <div class="dashboard-grid" style="gap:15px;">
             <div class="col-12"><h3>Ajustar Cantidades Corregidas</h3></div>
@@ -929,7 +929,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          this.showToast('Reingreso de estimacion guardado en borrador', 'success');
+          this.showToast('Reingreso de estimación guardado en borrador', 'success');
           this.closeModal();
           this.renderEstimacionesScreen();
         } catch (err) {}

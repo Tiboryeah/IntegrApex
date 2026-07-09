@@ -1,9 +1,9 @@
-// HU-02: alerta real de vencimiento de fianzas a 30/15/5 dias (configurable via umbrales_alerta).
+// HU-02: alerta real de vencimiento de fianzas a 30/15/5 días (configurable vía umbrales_alerta).
 // HU-07: disparo real de la alerta de atraso por concepto cuando el avance real cae bajo el umbral.
 // Sin infraestructura de cron externa, este job corre dentro del propio proceso Node
-// (arranca con el servidor y se repite por intervalo) ademas de evaluarse al vuelo
-// justo despues de los eventos que pueden cruzar un umbral (nueva fianza, endoso,
-// trabajos por periodo, integracion de estimacion, alta/edicion de alerta).
+// (arranca con el servidor y se repite por intervalo) además de evaluarse al vuelo
+// justo después de los eventos que pueden cruzar un umbral (nueva fianza, endoso,
+// trabajos por periodo, integración de estimación, alta/edición de alerta).
 const store = require('../db/store');
 const { notificar } = require('../utils/notificar');
 const { calcularAvanceConceptos } = require('../utils/avanceConceptos');
@@ -37,7 +37,7 @@ function checkFianzasVigencia() {
           contrato_id: f.contrato_id,
           tipo: 'fianza_vencimiento',
           canal: 'sistema',
-          mensaje: `La fianza de ${(f.tipo || '').replace('_', ' ')} (${f.afianzadora}) del contrato ${contract ? contract.folio : f.contrato_id} ${restantes >= 0 ? `vence en ${restantes} dia(s)` : `vencio hace ${Math.abs(restantes)} dia(s)`} (vigencia ${f.vigencia}). Umbral configurado: ${umbral} dias.`,
+          mensaje: `La fianza de ${(f.tipo || '').replace('_', ' ')} (${f.afianzadora}) del contrato ${contract ? contract.folio : f.contrato_id} ${restantes >= 0 ? `vence en ${restantes} día(s)` : `venció hace ${Math.abs(restantes)} día(s)`} (vigencia ${f.vigencia}). Umbral configurado: ${umbral} días.`,
           creado_para_rol: 'dependencia',
           relacionado_tipo: 'fianza',
           relacionado_id: f.id
@@ -54,7 +54,7 @@ function checkFianzasVigencia() {
 }
 
 // HU-07: se llama tras cualquier evento que modifique el avance real de un contrato
-// (trabajos por periodo, integracion de estimacion) o tras crear/editar una alerta.
+// (trabajos por periodo, integración de estimación) o tras crear/editar una alerta.
 function checkAlertasConcepto(contratoId) {
   const contract = store.findOne('contratos', c => c.id === contratoId);
   if (!contract) return;

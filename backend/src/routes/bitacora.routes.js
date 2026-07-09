@@ -19,7 +19,7 @@ router.post('/contratos/:id/bitacora/aperturar', authenticate, authorizeRoles('r
 
   const exists = store.findOne('bitacoras', b => b.contrato_id === contrato_id);
   if (exists) {
-    return res.status(400).json({ error: "La bitacora de este contrato ya fue aperturada" });
+    return res.status(400).json({ error: "La bitácora de este contrato ya fue aperturada" });
   }
 
   const bitacora = store.insert('bitacoras', {
@@ -33,7 +33,7 @@ router.post('/contratos/:id/bitacora/aperturar', authenticate, authorizeRoles('r
     completada: false
   });
 
-  return res.status(201).json({ message: "Bitacora creada en borrador. Pendiente de firmas de representantes.", bitacora });
+  return res.status(201).json({ message: "Bitácora creada en borrador. Pendiente de firmas de representantes.", bitacora });
 });
 
 // Por Firmar: Bandeja de firmas pendientes
@@ -67,12 +67,12 @@ router.post('/bitacora/:id/firmar', authenticate, (req, res) => {
 
   const bitacora = store.findOne('bitacoras', b => b.id === bitacora_id);
   if (!bitacora) {
-    return res.status(404).json({ error: "Registro de bitacora no encontrado" });
+    return res.status(404).json({ error: "Registro de bitácora no encontrado" });
   }
 
   const signatureIdx = bitacora.firmantes.findIndex(f => f.user_id === user.id);
   if (signatureIdx === -1) {
-    return res.status(403).json({ error: "No eres un firmante autorizado para esta bitacora" });
+    return res.status(403).json({ error: "No eres un firmante autorizado para esta bitácora" });
   }
 
   if (bitacora.firmantes[signatureIdx].firmado) {
@@ -93,7 +93,7 @@ router.post('/bitacora/:id/firmar', authenticate, (req, res) => {
       contrato_id: bitacora.contrato_id,
       folio: 1,
       tipo: "Apertura",
-      contenido: `Nota de Apertura Formal de Bitacora. Contrato Folio: ${contract.folio}. Objeto: ${contract.objeto}. Monto Contractual: $${contract.monto.toFixed(2)} M.N. Plazo: ${contract.plazo_dias} dias naturales con inicio el ${contract.fecha_inicio} y termino el ${contract.fecha_termino}. Representantes autorizados: Residente (${contract.residente_id}), Superintendente (${contract.superintendente_id}), Supervision (${contract.supervision_id || 'N/A'}). De acuerdo con el Art. 122 RLOPSRM.`,
+      contenido: `Nota de apertura formal de bitácora. Contrato folio: ${contract.folio}. Objeto: ${contract.objeto}. Monto contractual: $${contract.monto.toFixed(2)} M.N. Plazo: ${contract.plazo_dias} días naturales con inicio el ${contract.fecha_inicio} y término el ${contract.fecha_termino}. Representantes autorizados: Residente (${contract.residente_id}), Superintendente (${contract.superintendente_id}), Supervisión (${contract.supervision_id || 'N/A'}). De acuerdo con el Art. 122 RLOPSRM.`,
       creado_por_nombre: "Sistema IntegrApex (Firma conjunta)",
       creado_por_id: "system",
       creado_por_rol: "sistema",
@@ -102,10 +102,10 @@ router.post('/bitacora/:id/firmar', authenticate, (req, res) => {
     });
   }
 
-  return res.json({ message: "Firma registrada con exito", bitacora });
+  return res.json({ message: "Firma registrada con éxito", bitacora });
 });
 
-// HU-09: Emision y respuesta de notas
+// HU-09: Emisión y respuesta de notas
 router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   const contrato_id = req.params.id;
   const { tipo, vinculo_nota_id, referencia_tipo, referencia_id, dice, debe_decir } = req.body;
@@ -116,7 +116,7 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
     return res.status(400).json({ error: "Tipo requerido" });
   }
 
-  // HU-09: una correccion formal de una nota previa se registra con el formato
+  // HU-09: una corrección formal de una nota previa se registra con el formato
   // estructurado "dice / debe decir" en vez de texto libre, sin alterar la nota original.
   let correccion = null;
   if (dice || debe_decir) {
@@ -140,11 +140,11 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
 
   const bitacora = store.findOne('bitacoras', b => b.contrato_id === contrato_id);
   if (!bitacora || !bitacora.completada) {
-    return res.status(400).json({ error: "La bitacora no ha sido aperturada formalmente o le faltan firmas" });
+    return res.status(400).json({ error: "La bitácora no ha sido aperturada formalmente o le faltan firmas" });
   }
 
   const validTypes = {
-    residente: ['Autorizacion', 'Aprobacion', 'Instruccin', 'General'],
+    residente: ['Autorización', 'Aprobación', 'Instrucción', 'General'],
     contratista: ['Solicitud', 'Aviso', 'Entrega', 'General'],
     supervision: ['Avance', 'Incidencia', 'Reporte', 'General']
   };
@@ -191,7 +191,7 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   return res.status(201).json({ message: "Nota emitida y firmada digitalmente", nota: newNote });
 });
 
-// HU-10: Busqueda y consulta de notas
+// HU-10: Búsqueda y consulta de notas
 router.get('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   const contrato_id = req.params.id;
   const { tipo, f_inicio, f_fin, creador_id, vinculo, query } = req.query;
@@ -226,7 +226,7 @@ router.get('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   return res.json(filtered.sort((a, b) => a.folio - b.folio));
 });
 
-// HU-10: Exportar seleccion de notas a Excel
+// HU-10: Exportar selección de notas a Excel
 router.get('/contratos/:id/bitacora/notas/export', authenticate, async (req, res, next) => {
   try {
     const contrato_id = req.params.id;
@@ -260,7 +260,7 @@ router.get('/contratos/:id/bitacora/notas/export', authenticate, async (req, res
       firma: n.firma_hash ? n.firma_hash.substring(0, 16) : ''
     }));
 
-    const buffer = await buildWorkbookBuffer('Bitacora', columns, rows);
+    const buffer = await buildWorkbookBuffer('Bitácora', columns, rows);
     return sendXlsx(res, `Bitacora_${contrato_id}.xlsx`, buffer);
   } catch (e) {
     return next(e);

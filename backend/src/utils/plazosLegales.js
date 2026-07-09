@@ -1,9 +1,8 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Shared semaphore for every legal deadline in the system: HU-13/HU-15's 15
-// dias naturales de revision (art. 54 LOPSRM) and HU-20's 20 dias naturales
-// de pago (art. 54 LOPSRM). Verde while there's comfortable room, ambar in
-// the final third of the window, rojo once the deadline has passed.
+// Semáforo compartido para plazos legales:
+// 15 días naturales de revisión y 20 días naturales de pago (art. 54 LOPSRM).
+// Verde indica margen suficiente, ámbar indica tramo final y rojo indica vencimiento.
 function calcularPlazoLegal(fechaInicio, diasLimite) {
   if (!fechaInicio) return null;
 

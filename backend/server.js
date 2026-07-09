@@ -11,7 +11,7 @@ const { startScheduler } = require('./src/jobs/alertasScheduler');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middlewares globales de la aplicación.
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
@@ -19,7 +19,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Serve static files from frontend/public
+// Archivos estáticos del frontend y documentos cargados por usuarios.
 app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
 app.use('/uploads', express.static(uploadsDir));
 

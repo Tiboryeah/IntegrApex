@@ -3,7 +3,7 @@
 
   window.IntegrApexModules.bitacora = {
     // ==========================================
-    // RENDER POR FIRMAR BANDEJA (Por Firmar)
+    // Bandeja de aperturas pendientes de firma.
     // ==========================================
     async renderPorFirmarBandeja() {
       const outlet = document.getElementById('app-router-outlet');
@@ -33,7 +33,7 @@
         outlet.innerHTML = `
           <div class="main-container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-              <h1>Firmas de Bitacora Pendientes</h1>
+              <h1>Firmas de bitácora pendientes</h1>
               <button class="btn btn-secondary" onclick="app.navigate('inicio')">
                 <span class="material-icons-round">arrow_back</span> Inicio
               </button>
@@ -46,7 +46,7 @@
                       <th>Folio Contrato</th>
                       <th>Objeto de Obra</th>
                       <th>Fecha Entrega Sitio</th>
-                      <th>Accion</th>
+                      <th>Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -63,16 +63,16 @@
     async signBitacoraApertura(bitacoraId) {
       try {
         await this.api(`/api/bitacora/${bitacoraId}/firmar`, { method: 'POST' });
-        this.showToast('Acta firmada con exito', 'success');
+        this.showToast('Acta firmada con éxito', 'success');
         this.renderPorFirmarBandeja();
       } catch (e) {}
     },
 
     aperturarBitacoraDialog() {
       this.showModal(`
-        <h2>Apertura Formal de Bitacora (HU-08)</h2>
+        <h2>Apertura formal de bitácora (HU-08)</h2>
         <p style="margin-bottom: 20px; font-size:13.5px; color:var(--text-muted); line-height: 1.5;">
-          Conforme a los Arts. 46 y 52 Bis LOPSRM, asiente la apertura de la bitacora registrando la fecha formal de entrega del sitio de los trabajos.
+          Conforme a los Arts. 46 y 52 Bis LOPSRM, asiente la apertura de la bitácora registrando la fecha formal de entrega del sitio de los trabajos.
         </p>
         <form id="aperturar-bitacora-form">
           <div class="form-group">
@@ -106,7 +106,7 @@
       outlet.innerHTML = `
         <div class="dashboard-grid">
           <div class="col-12 glass-panel">
-            <h2>Filtros de Busqueda de Bitacora (HU-10)</h2>
+            <h2>Filtros de búsqueda de bitácora (HU-10)</h2>
             <form id="bit-search-form" class="dashboard-grid" style="gap:15px; margin-top:12px; margin-bottom:0;">
               <div class="col-3 form-group" style="margin-bottom:0;">
                 <label>Tipo Nota</label>
@@ -115,7 +115,7 @@
                   <option value="Apertura">Apertura</option>
                   <option value="Avance">Avance</option>
                   <option value="Solicitud">Solicitud</option>
-                  <option value="Autorizacion">Autorizacion</option>
+                  <option value="Autorización">Autorización</option>
                   <option value="Incidencia">Incidencia</option>
                 </select>
               </div>
@@ -138,12 +138,12 @@
                 <input type="number" id="s-vinculo" placeholder="Ej. 2">
               </div>
               <div class="col-5 form-group" style="margin-bottom:0;">
-                <label>Busqueda Texto</label>
+                <label>Búsqueda de texto</label>
                 <input type="text" id="s-query" placeholder="Palabra clave...">
               </div>
               <div class="col-4" style="display:flex; align-items:flex-end; gap:8px;">
                 <button type="submit" class="btn btn-primary" style="width:100%; height:41px;">Buscar</button>
-                <button type="button" class="btn btn-secondary" style="height:41px;" onclick="app.exportBitacoraExcel()">Exportar seleccion</button>
+                <button type="button" class="btn btn-secondary" style="height:41px;" onclick="app.exportBitacoraExcel()">Exportar selección</button>
               </div>
             </form>
           </div>
@@ -153,7 +153,7 @@
           </div>
 
           <div class="col-4 glass-panel" style="height: fit-content;">
-            <h2>Nueva Nota de Bitacora (HU-09)</h2>
+            <h2>Nueva nota de bitácora (HU-09)</h2>
             <form id="new-note-form" style="margin-top:16px;">
               <div class="form-group">
                 <label>Tipo de Nota</label>
@@ -203,9 +203,9 @@
       const noteTypeSelector = document.getElementById('n-tipo');
       if (this.state.user.rol === 'residente') {
         noteTypeSelector.innerHTML = `
-          <option value="Autorizacion">Autorizacion</option>
-          <option value="Aprobacion">Aprobacion</option>
-          <option value="Instruccin">Instruccin</option>
+          <option value="Autorización">Autorización</option>
+          <option value="Aprobación">Aprobación</option>
+          <option value="Instrucción">Instrucción</option>
           <option value="General">General</option>
         `;
       } else if (this.state.user.rol === 'contratista') {
@@ -301,7 +301,7 @@
         let html = '';
         if (notes.length === 0) {
           html = `<div class="glass-panel" style="padding: 40px; text-align: center; color: var(--text-muted);">
-            No se encontraron notas en la bitacora.
+            No se encontraron notas en la bitácora.
           </div>`;
         } else {
           html += `
@@ -427,7 +427,7 @@
             referencia_id
           })
         });
-        this.showToast(esCorreccion ? 'Correccion (Dice/Debe decir) registrada y firmada' : 'Nota registrada y firmada electrunicamente', 'success');
+        this.showToast(esCorreccion ? 'Corrección (Dice/Debe decir) registrada y firmada' : 'Nota registrada y firmada electrónicamente', 'success');
         document.getElementById('n-contenido').value = '';
         document.getElementById('n-vinculo').value = '';
         document.getElementById('n-dice').value = '';

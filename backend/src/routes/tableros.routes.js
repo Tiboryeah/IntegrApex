@@ -78,10 +78,10 @@ router.get('/tableros/estimaciones-activas', authenticate, (req, res) => {
   return res.json({ resumen, estimaciones: activeEstimations });
 });
 
-// HU-18: Vista ejecutiva del portafolio con semaforos
+// HU-18: Vista ejecutiva del portafolio con semáforos.
 //
 // avance_programado ya no es un 60% fijo: se calcula acumulando, mes a mes,
-// la parte del programa de obra (contract.programa) cuya fecha ya se cumplio,
+// la parte del programa de obra (contract.programa) cuya fecha ya se cumplió,
 // igual que la curva "programado" de HU-05 pero evaluada a la fecha de hoy.
 function calcularAvanceProgramado(contract) {
   const inicio = new Date(contract.fecha_inicio);
@@ -103,7 +103,7 @@ function calcularAvanceProgramado(contract) {
   return Math.min(100, (acumulado / scopeAmount) * 100);
 }
 
-// avance fisico real = subtotal de estimaciones pagadas hasta una fecha de corte,
+// Avance físico real = subtotal de estimaciones pagadas hasta una fecha de corte,
 // sobre el monto contractual. Se usa con "hoy" y con "fin del mes anterior" para
 // poder comparar el periodo actual contra el anterior.
 function calcularAvanceFisicoAFecha(contratoId, estimaciones, montoContrato, fechaCorte) {
@@ -137,7 +137,7 @@ router.get('/tableros/portafolio', authenticate, authorizeRoles('dependencia'), 
     const avanceFisicoMesAnterior = calcularAvanceFisicoAFecha(c.id, allEstimations, c.monto, finMesAnterior);
     const avanceProgramado = calcularAvanceProgramado(c);
 
-    // Factor 2: atrasos en plazos legales (revision de 15 dias, pago de 20 dias, fianzas vencidas)
+    // Factor 2: atrasos en plazos legales (revisión de 15 días, pago de 20 días, fianzas vencidas).
     const estimacionesVencidas = estimacionesContrato.filter(e => {
       const plazoRevision = ['presentada', 'en_revision'].includes(e.estado) && e.fecha_presentacion
         ? calcularPlazoLegal(e.fecha_presentacion, 15) : null;

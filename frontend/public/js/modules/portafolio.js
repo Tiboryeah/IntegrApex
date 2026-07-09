@@ -14,7 +14,7 @@
 
   window.IntegrApexModules.portafolio = {
     // ==========================================
-    // PORTAFOLIO EJECUTIVO (HU-18)
+    // Portafolio ejecutivo (HU-18).
     // ==========================================
     async renderPortafolioEjecutivo() {
       this.showLoggedInUI();
@@ -56,7 +56,7 @@
               </div>
             </div>
             <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">
-              El semaforo combina 3 factores: avance fisico vs. programado, atrasos en plazos legales (revision 15 dias, pago 20 dias, fianzas vencidas) y pendientes sin atender. Clic para abrir el contrato; doble clic para el detalle consolidado.
+              El semáforo combina 3 factores: avance físico vs. programado, atrasos en plazos legales (revisión 15 días, pago 20 días, fianzas vencidas) y pendientes sin atender. Clic para abrir el contrato; doble clic para el detalle consolidado.
             </p>
             <div class="dashboard-grid">
               ${contratos.length === 0 ? '<div class="col-12 glass-panel" style="padding:30px; text-align:center; color:var(--text-muted);">No hay contratos registrados</div>' : cuerpo}
@@ -78,7 +78,7 @@
              onclick="app.handleClickTarjetaPortafolio('${c.id}')">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <span class="user-badge" style="background:var(--ipn-maroon); color:white; font-size:10px; font-weight:700;">${c.folio}</span>
-            <span class="semaforo-dot ${c.semaforo}" title="Semaforo: ${c.semaforo}"></span>
+            <span class="semaforo-dot ${c.semaforo}" title="Semáforo: ${c.semaforo}"></span>
           </div>
           <h3 style="margin-top:10px; font-size:14.5px; line-height:1.4; color:#0f172a;">${c.objeto}</h3>
           <div style="font-size:11.5px; color:var(--text-muted); margin-top:6px;">Contratista: ${c.contratista} | Ejercicio ${c.ejercicio_fiscal}</div>
@@ -105,11 +105,8 @@
       `;
     },
 
-    // Native dblclick fires alongside two separate click events (not prevented by
-    // stopPropagation from within the dblclick handler), so a plain onclick+ondblclick
-    // pair would always navigate away before the double click registers. Detect the
-    // double click manually instead: a single click waits briefly to see if a second
-    // one follows before deciding what to do.
+    // El doble clic nativo dispara también eventos click independientes.
+    // Se usa una espera corta para distinguir apertura simple de detalle ejecutivo.
     handleClickTarjetaPortafolio(contratoId) {
       const now = Date.now();
       const pendiente = this.state.portafolioClickPendiente;
@@ -142,8 +139,8 @@
           <h2>Detalle Consolidado - ${item.folio}</h2>
           <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">${item.objeto}</p>
           <table style="width:100%;">
-            <tr><td style="color:var(--text-muted); font-weight:600; width:55%;">Semaforo:</td><td><span class="semaforo-dot ${item.semaforo}"></span> ${item.semaforo.toUpperCase()}</td></tr>
-            <tr><td style="color:var(--text-muted); font-weight:600;">Avance fisico:</td><td>${item.avance_fisico.toFixed(1)}%</td></tr>
+            <tr><td style="color:var(--text-muted); font-weight:600; width:55%;">Semáforo:</td><td><span class="semaforo-dot ${item.semaforo}"></span> ${item.semaforo.toUpperCase()}</td></tr>
+            <tr><td style="color:var(--text-muted); font-weight:600;">Avance físico:</td><td>${item.avance_fisico.toFixed(1)}%</td></tr>
             <tr><td style="color:var(--text-muted); font-weight:600;">Avance programado (a hoy):</td><td>${item.avance_programado.toFixed(1)}%</td></tr>
             <tr><td style="color:var(--text-muted); font-weight:600;">Avance financiero:</td><td>${item.avance_financiero.toFixed(1)}%</td></tr>
             <tr><td style="color:var(--text-muted); font-weight:600;">Monto contractual:</td><td>${money(item.monto)}</td></tr>

@@ -37,7 +37,7 @@ router.patch('/notificaciones/:id/leer', authenticate, (req, res) => {
   if (notif.creado_para_rol !== req.user.rol) return res.status(403).json({ error: "No autorizado" });
 
   const updated = store.update('notificaciones', notif.id, { leida: true });
-  return res.json({ message: "Notificacion marcada como leida", notificacion: updated });
+  return res.json({ message: "Notificación marcada como leída", notificacion: updated });
 });
 
 router.post('/notificaciones/leer-todas', authenticate, (req, res) => {
@@ -45,10 +45,10 @@ router.post('/notificaciones/leer-todas', authenticate, (req, res) => {
   const misContratos = contratosDelUsuario(user);
   const pendientes = store.find('notificaciones', n => n.creado_para_rol === user.rol && misContratos.has(n.contrato_id) && !n.leida);
   pendientes.forEach(n => store.update('notificaciones', n.id, { leida: true }));
-  return res.json({ message: `${pendientes.length} notificacion(es) marcada(s) como leida(s)` });
+  return res.json({ message: `${pendientes.length} notificación(es) marcada(s) como leída(s)` });
 });
 
-// HU-07 (canal 'correo'): buzon de correo simulado, sin depender de credenciales SMTP reales.
+// HU-07 (canal 'correo'): buzón de correo simulado, sin depender de credenciales SMTP reales.
 router.get('/correos-salientes', authenticate, (req, res) => {
   const user = req.user;
   const misContratos = contratosDelUsuario(user);

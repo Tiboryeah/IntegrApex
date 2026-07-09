@@ -18,7 +18,7 @@ router.post('/contratos/:id/minutas', authenticate, authorizeRoles('residente'),
     pdf_path: req.file ? `/uploads/${req.file.filename}` : null,
     creado_en: new Date().toISOString()
   });
-  return res.status(201).json({ message: "Minuta guardada con exito", minuta: newMinuta });
+  return res.status(201).json({ message: "Minuta guardada con éxito", minuta: newMinuta });
 });
 
 router.post('/contratos/:id/visitas', authenticate, authorizeRoles('residente'), (req, res) => {
@@ -29,7 +29,7 @@ router.post('/contratos/:id/visitas', authenticate, authorizeRoles('residente'),
     asistentes: req.body.asistentes,
     creado_en: new Date().toISOString()
   });
-  return res.status(201).json({ message: "Visita de obra agendada con exito", visita: newVisita });
+  return res.status(201).json({ message: "Visita de obra agendada con éxito", visita: newVisita });
 });
 
 module.exports = router;

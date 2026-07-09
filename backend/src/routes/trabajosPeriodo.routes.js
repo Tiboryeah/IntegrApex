@@ -70,10 +70,10 @@ router.post('/contratos/:id/trabajos-periodo', authenticate, authorizeRoles('con
       creado_en: new Date().toISOString()
     });
 
-    // HU-07: el avance real del contrato cambio, reevaluar si alguna alerta de concepto debe dispararse
+    // HU-07: el avance real del contrato cambió; se reevalúan alertas por concepto.
     checkAlertasConcepto(contrato_id);
 
-    return res.status(201).json({ message: "Trabajos terminados registrados con exito", trabajo });
+    return res.status(201).json({ message: "Trabajos terminados registrados con éxito", trabajo });
   } catch (e) {
     return res.status(e.statusCode || 400).json({ error: e.message });
   }

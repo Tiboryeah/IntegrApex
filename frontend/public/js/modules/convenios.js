@@ -15,7 +15,7 @@
               <td>${conv.descripcion}</td>
               <td>${conv.motivo || conv.descripcion}</td>
               <td style="color:${conv.cambio_monto >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:600;">$${conv.cambio_monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-              <td>${conv.cambio_plazo >= 0 ? '+' : ''}${conv.cambio_plazo} dias</td>
+              <td>${conv.cambio_plazo >= 0 ? '+' : ''}${conv.cambio_plazo} días</td>
               <td><span class="user-badge" style="background:#5c1e30; color:white; border:none;">${conv.articulo_aplicado}</span></td>
               <td>V${conv.version_previa || 1} -> V${conv.version_nueva || '-'}</td>
               <td>${endosos.length}</td>
@@ -46,7 +46,7 @@
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Descripcion del Convenio</th>
+                  <th>Descripción del convenio</th>
                   <th>Motivo</th>
                   <th>Ajuste Monto</th>
                   <th>Ajuste Plazo</th>
@@ -74,7 +74,7 @@
         </p>
         <form id="reg-convenio-form">
           <div class="form-group">
-            <label>Descripcion / Motivo del Convenio</label>
+            <label>Descripción / Motivo del convenio</label>
             <input type="text" id="cv-desc" placeholder="Ajuste de conceptos extraordinarios..." required>
           </div>
           <div class="form-group">

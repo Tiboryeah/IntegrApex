@@ -5,7 +5,7 @@
     renderFianzasTab(contract, outlet) {
       let rows = '';
       if (contract.fianzas.length === 0) {
-        rows = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding:24px;">No hay polizas registradas</td></tr>`;
+        rows = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding:24px;">No hay pólizas registradas</td></tr>`;
       } else {
         contract.fianzas.forEach(f => {
           const remainingDays = Math.ceil((new Date(f.vigencia) - new Date()) / (1000 * 60 * 60 * 24));
@@ -29,7 +29,7 @@
               <td>$${f.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
               <td>${f.vigencia}</td>
               <td>${alertLabel}</td>
-              <td>${thresholds.join(' / ')} dias</td>
+              <td>${thresholds.join(' / ')} días</td>
               <td>${(f.endosos || []).length}</td>
               <td>
                 ${f.pdf_poliza ? `<a class="btn btn-secondary btn-sm" href="${f.pdf_poliza}" target="_blank">Ver PDF</a>` : 'Sin archivo'}
@@ -52,7 +52,7 @@
       outlet.innerHTML = `
         <div class="glass-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-            <h2>Fianzas y Garantias (HU-02)</h2>
+            <h2>Fianzas y garantías (HU-02)</h2>
             ${actionBtn}
           </div>
           <div class="table-container">
@@ -66,7 +66,7 @@
                   <th>Estatus Alerta</th>
                   <th>Umbrales</th>
                   <th>Endosos</th>
-                  <th>Accion</th>
+                  <th>Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -80,7 +80,7 @@
 
     registrarFianzaDialog() {
       this.showModal(`
-        <h2>Registrar Fianza / Garantia (HU-02)</h2>
+        <h2>Registrar fianza / garantía (HU-02)</h2>
         <form id="reg-fianza-form" style="margin-top:16px;">
           <div class="form-group">
             <label>Tipo de Fianza</label>
@@ -103,7 +103,7 @@
             <input type="date" id="fz-vigencia" required>
           </div>
           <div class="form-group">
-            <label>Umbrales de alerta (dias antes del vencimiento)</label>
+            <label>Umbrales de alerta (días antes del vencimiento)</label>
             <input type="text" id="fz-umbrales" value="30,15,5" required>
           </div>
           <div class="form-group">
@@ -144,7 +144,7 @@
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
 
-          this.showToast('Fianza registrada con exito', 'success');
+          this.showToast('Fianza registrada con éxito', 'success');
           this.closeModal();
           this.renderContractDetail();
         } catch (err) {
@@ -157,11 +157,11 @@
       this.showModal(`
         <h2>Registrar Endoso de Fianza</h2>
         <p style="margin-bottom: 20px; font-size:13px; color:var(--text-muted);">
-          Use este registro cuando un convenio o ajuste formal modifique monto, vigencia o alcance de la poliza.
+          Use este registro cuando un convenio o ajuste formal modifique monto, vigencia o alcance de la póliza.
         </p>
         <form id="reg-endoso-form">
           <div class="form-group">
-            <label>Descripcion / Motivo</label>
+            <label>Descripción / Motivo</label>
             <textarea id="en-desc" rows="3" required></textarea>
           </div>
           <div class="dashboard-grid" style="gap:12px;">
@@ -201,7 +201,7 @@
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
-          this.showToast('Endoso registrado con exito', 'success');
+          this.showToast('Endoso registrado con éxito', 'success');
           this.closeModal();
           this.renderContractDetail();
         } catch (err) {

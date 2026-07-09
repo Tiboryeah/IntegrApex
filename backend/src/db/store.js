@@ -3,13 +3,13 @@ const path = require('path');
 
 const DB_PATH = path.join(__dirname, '..', '..', 'data', 'db.json');
 
-// Ensure data folder exists
+// Garantiza que exista la carpeta local de persistencia.
 const dataDir = path.join(__dirname, '..', '..', 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// Initial state of the database with test accounts prepopulated
+// Estado inicial de la base JSON con cuentas y contratos de demostración.
 const initialState = {
   usuarios: [
     { id: "u0", email: "residente@integrapex.test", nombre: "Ing. Residente Base", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
@@ -19,35 +19,35 @@ const initialState = {
     { id: "u4", email: "csilvasa@ipn.mx", nombre: "Prof. Resident IPN", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u5", email: "correo@dominio.com", nombre: "Isha Finanzas", rol: "finanzas", contrasena: "Contrasena123!", estado: "aprobado" },
     
-    // Aldo Team
+    // Equipo de demostración: Aldo
     { id: "u_aldo_res", email: "residente2.demo@integrapex.test", nombre: "Residente Aldo", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_aldo_con", email: "super2.demo@integrapex.test", nombre: "Contratista Aldo", rol: "contratista", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_aldo_sup", email: "superv2.demo@integrapex.test", nombre: "Supervision Aldo", rol: "supervision", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_aldo_dep", email: "dependencia.sur@integrapex.test", nombre: "Dependencia Aldo", rol: "dependencia", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_aldo_fin", email: "finanzas.sur@integrapex.test", nombre: "Finanzas Aldo", rol: "finanzas", contrasena: "IntegrApex2026!", estado: "aprobado" },
 
-    // Ronis Team
+    // Equipo de demostración: Ronis
     { id: "u_ronis_res", email: "residente.sur@integrapex.test", nombre: "Residente Ronis", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_ronis_con", email: "super3.demo@integrapex.test", nombre: "Contratista Ronis", rol: "contratista", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_ronis_sup", email: "superv.sur@integrapex.test", nombre: "Supervision Ronis", rol: "supervision", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_ronis_dep", email: "dep2@integrapex.test", nombre: "Dependencia Ronis", rol: "dependencia", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_ronis_fin", email: "finanzas.norte@integrapex.test", nombre: "Finanzas Ronis", rol: "finanzas", contrasena: "IntegrApex2026!", estado: "aprobado" },
 
-    // Leo Team
+    // Equipo de demostración: Leo
     { id: "u_leo_res", email: "residente.norte@integrapex.test", nombre: "Residente Leo", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_leo_con", email: "patito1@integrapex.test", nombre: "Contratista Leo", rol: "contratista", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_leo_sup", email: "superv.norte@integrapex.test", nombre: "Supervision Leo", rol: "supervision", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_leo_dep", email: "dependencia4@integrapex.test", nombre: "Dependencia Leo", rol: "dependencia", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_leo_fin", email: "finanzas4@integrapex.test", nombre: "Finanzas Leo", rol: "finanzas", contrasena: "IntegrApex2026!", estado: "aprobado" },
 
-    // Van Team
+    // Equipo de demostración: Van
     { id: "u_van_res", email: "residente4@integrapex.test", nombre: "Residente Van", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_van_con", email: "patito2@integrapex.test", nombre: "Contratista Van", rol: "contratista", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_van_sup", email: "superv4@integrapex.test", nombre: "Supervision Van", rol: "supervision", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_van_dep", email: "dependencia5@integrapex.test", nombre: "Dependencia Van", rol: "dependencia", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_van_fin", email: "finanzas5@integrapex.test", nombre: "Finanzas Van", rol: "finanzas", contrasena: "IntegrApex2026!", estado: "aprobado" },
 
-    // Chinos Team
+    // Equipo de demostración: Chinos
     { id: "u_chinos_res", email: "residente5@integrapex.test", nombre: "Residente Chinos", rol: "residente", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_chinos_con", email: "pacifico1@integrapex.test", nombre: "Contratista Chinos", rol: "contratista", contrasena: "IntegrApex2026!", estado: "aprobado" },
     { id: "u_chinos_sup", email: "superv5@integrapex.test", nombre: "Supervision Chinos", rol: "supervision", contrasena: "IntegrApex2026!", estado: "aprobado" },
@@ -107,7 +107,7 @@ const initialState = {
   configuracion_alertas: []
 };
 
-// Auto create default contracts for Aldo, Ronis, Leo, Van, Chinos teams
+// Contratos base para los equipos de demostración.
 const teams = [
   { prefix: "aldo", folio: "SOP-2026-002", obj: "Rehabilitacion de Colector Sanitario - Zona Sur (Aldo)", res: "u_aldo_res", con: "u_aldo_con", sup: "u_aldo_sup" },
   { prefix: "ronis", folio: "SOP-2026-003", obj: "Pavimentacion y Guarniciones en Colonia Centro (Ronis)", res: "u_ronis_res", con: "u_ronis_con", sup: "u_ronis_sup" },

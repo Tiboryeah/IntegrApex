@@ -17,11 +17,11 @@ router.post('/contratos/:id/convenios', authenticate, authorizeRoles('dependenci
   }
 
   if (!descripcion) {
-    return res.status(400).json({ error: "Descripcion del convenio requerida" });
+    return res.status(400).json({ error: "Descripción del convenio requerida" });
   }
 
   try {
-    catalogo_nuevo = parseJsonField(catalogo_nuevo, null, 'Catalogo nuevo');
+    catalogo_nuevo = parseJsonField(catalogo_nuevo, null, 'Catálogo nuevo');
     programa_nuevo = parseJsonField(programa_nuevo, null, 'Programa nuevo');
   } catch (e) {
     return res.status(400).json({ error: e.message });
@@ -138,7 +138,7 @@ router.post('/contratos/:id/convenios', authenticate, authorizeRoles('dependenci
     creado_en: new Date().toISOString()
   });
 
-  return res.json({ message: "Convenio modificatorio aplicado con exito", convenio, lopsrm_articulo, endosos_generados: endosos.length });
+  return res.json({ message: "Convenio modificatorio aplicado con éxito", convenio, lopsrm_articulo, endosos_generados: endosos.length });
 });
 
 module.exports = router;

@@ -1,24 +1,30 @@
-# Cuentas de prueba - IntegrApex
+# Cuentas de demostración - IntegrApex
 
-> Material interno. Contiene contrasenas: **no subir al repositorio**.
+Estas cuentas permiten revisar los flujos principales por rol en un entorno local o de demostración.
 
-| Cuenta (email para login) | Rol | Contrasena | Donde existe |
-|---|---|---|---|
-| `residente@integrapex.test` | residente | `IntegrApex2026!` | local y Render |
-| `contratista@integrapex.test` | contratista | `IntegrApex2026!` | local y Render |
-| `supervision@integrapex.test` | supervision | `IntegrApex2026!` | local y Render |
-| `dependencia@integrapex.test` | dependencia | `IntegrApex2026!` | local y Render |
-| `csilvasa@ipn.mx` (profe) | residente | `IntegrApex2026!` | local y Render |
-| `correo@dominio.com` (Isha) | finanzas | `Contrasena123!` | **solo local** |
+| Cuenta | Rol | Contraseña |
+|---|---|---|
+| `residente@integrapex.test` | residente | `IntegrApex2026!` |
+| `contratista@integrapex.test` | contratista | `IntegrApex2026!` |
+| `supervision@integrapex.test` | supervisión | `IntegrApex2026!` |
+| `dependencia@integrapex.test` | dependencia | `IntegrApex2026!` |
+| `correo@dominio.com` | finanzas | `Contrasena123!` |
 
-## Notas
+## Uso recomendado
 
-- Las **5 primeras** comparten la contrasena `IntegrApex2026!` y existen en ambas bases (local y Render).
-- **Isha** (finanzas) se creo con el script en local, asi que **solo esta en local**; su contrasena es `Contrasena123!` (segun el comando usado). Para tenerla tambien en Render, creala ahi con el script.
-- El **residente** registrado por el formulario quedo **pendiente de aprobacion**; su correo/contrasena los elegiste al registrarlo. Apruebalo como `dependencia@integrapex.test` antes de poder entrar con el.
+1. Iniciar con `residente@integrapex.test` para crear o consultar contratos.
+2. Usar `contratista@integrapex.test` para bitácora, estimaciones y tránsito a pago.
+3. Usar `supervision@integrapex.test` para revisión técnica.
+4. Usar `dependencia@integrapex.test` para aprobar registros, consultar portafolio, fianzas y convenios.
+5. Usar `correo@dominio.com` para registrar pagos.
 
-## Recordatorios
+## Registro de usuarios nuevos
 
-- Para validar persistencia, usa **login real** (correo + contrasena), no los botones de modo demo (sin token: 401).
-- Local y Render son bases **separadas**: una cuenta solo aparece donde se creo.
-- Solo `residente` puede crear contratos (HU-01).
+Los usuarios registrados desde la pantalla `Solicitar acceso` quedan en estado pendiente. Para activarlos:
+
+1. Iniciar sesión como dependencia.
+2. Abrir `Solicitudes de registro`.
+3. Confirmar o ajustar el rol efectivo.
+4. Aprobar la solicitud.
+
+Después de la aprobación, el usuario puede iniciar sesión con el correo y contraseña registrados.

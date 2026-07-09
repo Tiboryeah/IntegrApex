@@ -106,7 +106,7 @@
         <h2>Subir Minuta de Reunin (HU-11)</h2>
         <form id="reg-minuta-form">
           <div class="form-group">
-            <label>Descripcion / Asunto</label>
+            <label>Descripción / Asunto</label>
             <input type="text" id="min-desc" placeholder="Reunin mensual de avance" required>
           </div>
           <div class="form-group">
@@ -138,7 +138,7 @@
           });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
-          this.showToast('Minuta cargada con exito', 'success');
+          this.showToast('Minuta cargada con éxito', 'success');
           this.closeModal();
           this.renderContractDetail();
         } catch (err) {

@@ -1,6 +1,5 @@
-// Period filtering + the 7 HU-19 report definitions (title/columns/rows),
-// shared by the JSON data endpoint and the XLSX/PDF export endpoint so both
-// always agree on what a given report contains.
+// Filtros de periodo y definiciones de los 7 reportes de HU-19.
+// Se comparten entre la consulta JSON y la exportación XLSX/PDF para mantener consistencia.
 
 function isWithinPeriod(dateStr, periodoTipo, periodoValor) {
   if (!periodoTipo || periodoTipo === 'acumulado' || !periodoValor) return true;
@@ -53,8 +52,7 @@ function buildReporteData(contract, notes, estimations, convenios, filters = {})
 
 const money = v => `$${(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
 
-// One entry per one of the 7 reports defined in HU-19. `rows`/`subtitle`
-// receive the already period-filtered data object built above.
+// Una entrada por reporte. `rows` y `subtitle` reciben datos ya filtrados por periodo.
 const REPORT_DEFINITIONS = {
   fisico: {
     label: 'Avance Fisico de Obra',
@@ -70,7 +68,7 @@ const REPORT_DEFINITIONS = {
       clave: c.clave, descripcion: c.descripcion, unidad: c.unidad,
       cantidad: c.cantidad, precio_unitario: money(c.precio_unitario), importe: money(c.precio_unitario * c.cantidad)
     })),
-    subtitle: data => `Avance fisico real: ${money(data.fisico.avance_fisico_real)} de ${money(data.fisico.programado)} programado`
+    subtitle: data => `Avance físico real: ${money(data.fisico.avance_fisico_real)} de ${money(data.fisico.programado)} programado`
   },
   financiero: {
     label: 'Avance Financiero',
@@ -89,7 +87,7 @@ const REPORT_DEFINITIONS = {
     }
   },
   estimaciones: {
-    label: 'Historial de Estimaciones',
+    label: 'Historial de estimaciones',
     columns: [
       { header: 'Periodo', key: 'periodo' },
       { header: 'Estado', key: 'estado' },
@@ -118,7 +116,7 @@ const REPORT_DEFINITIONS = {
     }))
   },
   bitacora: {
-    label: 'Bitacora de Notas',
+    label: 'Bitácora de notas',
     columns: [
       { header: 'Folio', key: 'folio' },
       { header: 'Tipo', key: 'tipo' },
@@ -131,7 +129,7 @@ const REPORT_DEFINITIONS = {
     label: 'Convenios Modificatorios',
     columns: [
       { header: 'ID', key: 'id' },
-      { header: 'Descripcion', key: 'descripcion' },
+      { header: 'Descripción', key: 'descripcion' },
       { header: 'Ajuste Monto', key: 'cambio_monto' },
       { header: 'Ajuste Plazo', key: 'cambio_plazo' },
       { header: 'Articulo LOPSRM', key: 'articulo' },
@@ -139,7 +137,7 @@ const REPORT_DEFINITIONS = {
     ],
     rows: data => data.modificatorios.map(m => ({
       id: m.id, descripcion: m.descripcion, cambio_monto: money(m.cambio_monto),
-      cambio_plazo: `${m.cambio_plazo} dias`, articulo: m.articulo_aplicado,
+      cambio_plazo: `${m.cambio_plazo} días`, articulo: m.articulo_aplicado,
       fecha: m.creado_en ? new Date(m.creado_en).toLocaleDateString('es-MX') : ''
     }))
   },

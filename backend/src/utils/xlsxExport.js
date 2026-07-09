@@ -1,8 +1,7 @@
 const ExcelJS = require('exceljs');
 
-// Generic XLSX builder shared by every export endpoint (bitacora notes today,
-// the HU-19 reports later): columns describe header/key/width, rows are plain
-// objects keyed the same as columns[].key.
+// Generador XLSX compartido por los endpoints de exportación.
+// Las columnas definen encabezado/llave/ancho y las filas usan esas mismas llaves.
 async function buildWorkbookBuffer(sheetName, columns, rows) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'IntegrApex';

@@ -1,8 +1,7 @@
 const PDFDocument = require('pdfkit');
 
-// Generic single-table PDF builder shared by every report export. Mirrors
-// xlsxExport.js's buildWorkbookBuffer so every report type (7 for HU-19,
-// bitacora for HU-10) is defined the same way: title + columns + rows.
+// Generador PDF de tabla única, compartido por las exportaciones de reportes.
+// Mantiene la misma estructura que XLSX: título, columnas y filas.
 function buildTablePdfBuffer(title, subtitle, columns, rows) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 40, size: 'A4', layout: 'landscape' });

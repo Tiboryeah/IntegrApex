@@ -29,7 +29,7 @@ router.get('/contratos/:id/reporte-data', authenticate, (req, res) => {
   return res.json(reportes);
 });
 
-// HU-19: Exportacion real de cada uno de los 7 reportes definidos, en XLSX o PDF
+// HU-19: Exportación real de cada uno de los 7 reportes definidos, en XLSX o PDF.
 router.get('/contratos/:id/reportes/:tipo/export', authenticate, async (req, res, next) => {
   try {
     const { tipo } = req.params;

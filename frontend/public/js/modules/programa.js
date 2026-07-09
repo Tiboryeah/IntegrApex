@@ -207,7 +207,7 @@
 
       document.getElementById('program-progress-summary').innerHTML = `
         <div class="table-container">
-          <table><thead><tr><th>Concepto</th><th>Programado</th><th>Ejecutado</th><th>Pagado</th><th>Avance fisico</th></tr></thead><tbody>${rows}</tbody></table>
+          <table><thead><tr><th>Concepto</th><th>Programado</th><th>Ejecutado</th><th>Pagado</th><th>Avance físico</th></tr></thead><tbody>${rows}</tbody></table>
         </div>
       `;
     },
@@ -226,7 +226,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px;">
             <h2>Trabajos Terminados por Periodo (HU-06)</h2>${registerBtn}
           </div>
-          <div class="table-container"><table><thead><tr><th>Periodo</th><th>Fechas</th><th>Importe fisico</th><th>Nota vinculada</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>
+          <div class="table-container"><table><thead><tr><th>Periodo</th><th>Fechas</th><th>Importe físico</th><th>Nota vinculada</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>
         </div>
       `;
     },
@@ -252,7 +252,7 @@
               <h2 style="font-size: 15px;">Vigilancia Conceptos (HU-07)</h2>${configBtn}
             </div>
             <div class="table-container">
-              <table><thead><tr><th>Clave</th><th>Limite</th><th>Canal</th><th>Estado</th><th>Atraso</th><th style="text-align:center;">Accion</th></tr></thead><tbody>${rows}</tbody></table>
+              <table><thead><tr><th>Clave</th><th>Límite</th><th>Canal</th><th>Estado</th><th>Atraso</th><th style="text-align:center;">Acción</th></tr></thead><tbody>${rows}</tbody></table>
             </div>
           </div>
         `;
@@ -304,7 +304,7 @@
             <div class="form-group"><label>Periodo</label><input type="number" id="tp-periodo" min="1" required></div>
             <div class="form-group"><label>Fecha inicio</label><input type="date" id="tp-inicio" required></div>
             <div class="form-group"><label>Fecha fin</label><input type="date" id="tp-fin" required></div>
-            <div class="form-group"><label>Nota de bitacora vinculada</label><select id="tp-nota" required ${notes.length === 0 ? 'disabled' : ''}>${noteOptions}</select></div>
+            <div class="form-group"><label>Nota de bitácora vinculada</label><select id="tp-nota" required ${notes.length === 0 ? 'disabled' : ''}>${noteOptions}</select></div>
           </div>
           <div class="table-container" style="margin-top:14px;"><table><thead><tr><th>Clave</th><th>Concepto</th><th>Unidad</th><th>Contratada</th><th>Terminada</th></tr></thead><tbody>${conceptInputs}</tbody></table></div>
           <div class="form-group" style="margin-top:14px;"><label>Observaciones</label><textarea id="tp-observaciones" rows="3"></textarea></div>
@@ -356,7 +356,7 @@
         <form id="configurar-alerta-form">
           <div class="form-group"><label>Concepto a Monitorear</label><select id="al-concept" required>${conceptOpts}</select></div>
           <div class="form-group"><label>Limite Desviacion Permitido (%)</label><input type="number" id="al-limite" placeholder="Ej. 10" min="1" max="100" required></div>
-          <div class="form-group"><label>Canal de Notificacion</label><select id="al-canal"><option value="sistema">Notificacion en Sistema</option><option value="correo">Correo Electronico (Ficticio)</option></select></div>
+          <div class="form-group"><label>Canal de notificación</label><select id="al-canal"><option value="sistema">Notificación en sistema</option><option value="correo">Correo electrónico simulado</option></select></div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
             <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
             <button type="submit" class="btn btn-primary">Configurar Alerta</button>

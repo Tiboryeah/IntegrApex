@@ -1,6 +1,6 @@
-// HU-07/HU-02: entrega una notificacion por el canal configurado.
-// canal 'sistema' -> bandeja en app (coleccion 'notificaciones').
-// canal 'correo'  -> buzon de correo simulado (coleccion 'correos_salientes'),
+// HU-07/HU-02: entrega una notificación por el canal configurado.
+// canal 'sistema' -> bandeja en app (colección 'notificaciones').
+// canal 'correo'  -> buzón de correo simulado (colección 'correos_salientes'),
 // para no depender de credenciales SMTP reales en este prototipo.
 const store = require('../db/store');
 

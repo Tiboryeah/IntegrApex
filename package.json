@@ -4,7 +4,10 @@
   "description": "IntegrApex - Sistema de Gestion de Contratos de Obra Publica",
   "scripts": {
     "postinstall": "cd backend && npm install",
-    "start": "cd backend && node server.js"
+    "start": "cd backend && node server.js",
+    "test": "node tests/run-integrapex-tests.js",
+    "test:smoke": "node tests/run-integrapex-tests.js --smoke",
+    "test:hu": "node tests/run-integrapex-tests.js --grep"
   },
   "devDependencies": {
     "playwright": "^1.61.1"

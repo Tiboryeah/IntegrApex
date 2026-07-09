@@ -8,7 +8,7 @@ const { checkFianzasVigencia } = require('../jobs/alertasScheduler');
 
 const router = express.Router();
 
-// HU-02: Fianzas y garantias
+// HU-02: Fianzas y garantías
 router.post('/contratos/:id/fianzas', authenticate, authorizeRoles('dependencia'), upload.single('pdf_poliza'), (req, res) => {
   const contrato_id = req.params.id;
   const { afianzadora, vigencia, monto, tipo } = req.body;
@@ -48,10 +48,10 @@ router.post('/contratos/:id/fianzas', authenticate, authorizeRoles('dependencia'
     creado_en: new Date().toISOString()
   });
 
-  // HU-02: si la vigencia ya nace dentro de una ventana de alerta (30/15/5 dias), notificar de inmediato
+  // HU-02: si la vigencia ya nace dentro de una ventana de alerta (30/15/5 días), notificar de inmediato.
   checkFianzasVigencia();
 
-  return res.status(201).json({ message: "Garantia registrada con exito", fianza: newBond });
+  return res.status(201).json({ message: "Garantía registrada con éxito", fianza: newBond });
 });
 
 router.post('/fianzas/:id/endosos', authenticate, authorizeRoles('dependencia'), upload.single('pdf_endoso'), (req, res) => {
@@ -62,7 +62,7 @@ router.post('/fianzas/:id/endosos', authenticate, authorizeRoles('dependencia'),
 
   const { descripcion, cambio_monto, nueva_vigencia, convenio_id } = req.body;
   if (!descripcion) {
-    return res.status(400).json({ error: "Descripcion del endoso requerida" });
+    return res.status(400).json({ error: "Descripción del endoso requerida" });
   }
 
   const endoso = store.insert('fianza_endosos', {
@@ -91,7 +91,7 @@ router.post('/fianzas/:id/endosos', authenticate, authorizeRoles('dependencia'),
 
   checkFianzasVigencia();
 
-  return res.status(201).json({ message: "Endoso registrado con exito", endoso });
+  return res.status(201).json({ message: "Endoso registrado con éxito", endoso });
 });
 
 module.exports = router;

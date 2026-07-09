@@ -11,9 +11,12 @@ backend/data/uploads/*
 # resolve to backend/data/, not this one). Left on disk untouched, just untracked.
 /data/
 
-# Previous attempt, out of scope (see README)
+# Intento previo fuera del alcance de esta entrega.
 IntegrApex-main/
 IntegrApex-main.zip
 
-# Local tooling
-.claude/
+# Local runtime logs
+backend/server*.log
+
+# Test runner scratch files
+tests/.artifacts/

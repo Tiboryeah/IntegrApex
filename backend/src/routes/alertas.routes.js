@@ -38,7 +38,7 @@ router.post('/contratos/:id/alertas', authenticate, authorizeRoles('residente'),
       relacionado_id: existing.id
     });
     checkAlertasConcepto(contrato_id);
-    return res.json({ message: "Alerta de concepto actualizada con exito", alerta: updated });
+    return res.json({ message: "Alerta de concepto actualizada con éxito", alerta: updated });
   } else {
     const newAlert = store.insert('alertas', {
       contrato_id,
@@ -59,7 +59,7 @@ router.post('/contratos/:id/alertas', authenticate, authorizeRoles('residente'),
       relacionado_id: newAlert.id
     });
     checkAlertasConcepto(contrato_id);
-    return res.status(201).json({ message: "Alerta de concepto configurada con exito", alerta: newAlert });
+    return res.status(201).json({ message: "Alerta de concepto configurada con éxito", alerta: newAlert });
   }
 });
 
@@ -79,7 +79,7 @@ router.patch('/alertas/:id', authenticate, authorizeRoles('residente'), (req, re
 
 router.delete('/alertas/:id', authenticate, authorizeRoles('residente'), (req, res) => {
   store.delete('alertas', req.params.id);
-  return res.json({ message: "Alerta de concepto eliminada con exito" });
+  return res.json({ message: "Alerta de concepto eliminada con éxito" });
 });
 
 module.exports = router;

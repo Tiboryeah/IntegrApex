@@ -6,13 +6,13 @@ const { upload } = require('../middleware/upload');
 
 const router = express.Router();
 
-// HU-20: Transito a pago - suficiencia presupuestal (Art. 24 LOPSRM), contra el
+// HU-20: Tránsito a pago - suficiencia presupuestal (Art. 24 LOPSRM), contra el
 // techo contractual real del contrato (monto menos lo ya comprometido/pagado en
 // otras estimaciones), no un techo global compartido entre todos los contratos.
 router.post('/estimaciones/:id/presupuesto', authenticate, authorizeRoles('contratista', 'finanzas'), (req, res) => {
   const est_id = req.params.id;
   const est = store.findOne('estimaciones', e => e.id === est_id);
-  if (!est) return res.status(404).json({ error: "Estimacion no encontrada" });
+  if (!est) return res.status(404).json({ error: "Estimación no encontrada" });
 
   const contract = store.findOne('contratos', c => c.id === est.contrato_id);
   if (!contract) return res.status(404).json({ error: "Contrato no encontrado" });
@@ -27,18 +27,18 @@ router.post('/estimaciones/:id/presupuesto', authenticate, authorizeRoles('contr
 
   if (est.liquido_a_pagar > techoDisponible) {
     return res.status(400).json({
-      error: `Restriccin del Art. 24 LOPSRM: Insuficiencia presupuestal. El liquido de la estimacion ($${est.liquido_a_pagar.toFixed(2)}) excede el presupuesto contractual disponible del contrato ${contract.folio} ($${techoDisponible.toFixed(2)}).`
+      error: `Restricción del Art. 24 LOPSRM: Insuficiencia presupuestal. El líquido de la estimación ($${est.liquido_a_pagar.toFixed(2)}) excede el presupuesto contractual disponible del contrato ${contract.folio} ($${techoDisponible.toFixed(2)}).`
     });
   }
 
   return res.json({
-    message: "Verificacion de suficiencia presupuestal exitosa (Art. 24 LOPSRM).",
+    message: "Verificación de suficiencia presupuestal exitosa (Art. 24 LOPSRM).",
     disponible: techoDisponible,
     solicitado: est.liquido_a_pagar
   });
 });
 
-// HU-20: Cargar soportes y generar instruccion. Exige factura, CFDI y, cuando el
+// HU-20: Cargar soportes y generar instrucción. Exige factura, CFDI y, cuando el
 // contrato tiene registrada una fianza de cumplimiento, que siga vigente.
 router.post('/estimaciones/:id/instruccion-pago', authenticate, authorizeRoles('contratista', 'finanzas'), upload.fields([
   { name: 'factura', maxCount: 1 },
@@ -46,10 +46,10 @@ router.post('/estimaciones/:id/instruccion-pago', authenticate, authorizeRoles('
 ]), (req, res) => {
   const est_id = req.params.id;
   const est = store.findOne('estimaciones', e => e.id === est_id);
-  if (!est) return res.status(404).json({ error: "Estimacion no encontrada" });
+  if (!est) return res.status(404).json({ error: "Estimación no encontrada" });
 
   if (est.estado !== 'autorizada') {
-    return res.status(400).json({ error: "La estimacion debe estar en estado 'autorizada'." });
+    return res.status(400).json({ error: "La estimación debe estar en estado 'autorizada'." });
   }
 
   if (!req.files || !req.files['factura'] || !req.files['cfdi']) {
@@ -76,13 +76,13 @@ router.post('/estimaciones/:id/instruccion-pago', authenticate, authorizeRoles('
     contrato_id: est.contrato_id,
     tipo: 'instruccion_pago',
     canal: 'sistema',
-    mensaje: `Instruccion de pago generada para la estimacion Periodo #${est.periodo_numero} del contrato ${contract ? contract.folio : est.contrato_id}. Plazo de pago: 20 dias naturales (Art. 54 LOPSRM).`,
+    mensaje: `Instrucción de pago generada para la estimación periodo #${est.periodo_numero} del contrato ${contract ? contract.folio : est.contrato_id}. Plazo de pago: 20 días naturales (Art. 54 LOPSRM).`,
     leida: false,
     creado_para_rol: 'finanzas',
     creado_en: now
   });
 
-  return res.json({ message: "Instruccin de pago generada. Estatus actualizado a 'en_pago'." });
+  return res.json({ message: "Instrucción de pago generada. Estatus actualizado a 'en_pago'." });
 });
 
 // HU-21: Registrar el pago efectuado
@@ -96,7 +96,7 @@ router.post('/estimaciones/:id/registrar-pago', authenticate, authorizeRoles('fi
 
   const est = store.findOne('estimaciones', e => e.id === est_id);
   if (!est || est.estado !== 'en_pago') {
-    return res.status(400).json({ error: "La estimacion debe estar en transito de pago." });
+    return res.status(400).json({ error: "La estimación debe estar en tránsito de pago." });
   }
 
   store.update('estimaciones', est_id, {
@@ -117,7 +117,7 @@ router.post('/estimaciones/:id/registrar-pago', authenticate, authorizeRoles('fi
     registrado_por: req.user.nombre
   });
 
-  return res.json({ message: "Pago registrado y conciliado con exito." });
+  return res.json({ message: "Pago registrado y conciliado con éxito." });
 });
 
 module.exports = router;

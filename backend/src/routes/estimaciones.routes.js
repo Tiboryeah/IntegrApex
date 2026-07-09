@@ -11,10 +11,9 @@ const { checkAlertasConcepto } = require('../jobs/alertasScheduler');
 
 const router = express.Router();
 
-// HU-12: Integracion de estimacion. La estimacion se integra como una sola
-// entidad: caratula (calculada), generadores (avances), registro fotografico
-// y soportes (cargados aqui mismo, no hasta el envio de HU-13) y notas de
-// bitacora seleccionadas desde el buscador de HU-10.
+// HU-12: Integración de estimación. La estimación se integra como una sola
+// entidad: carátula calculada, generadores, registro fotográfico,
+// soportes y notas de bitácora seleccionadas desde el buscador de HU-10.
 router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles('contratista'), upload.fields([
   { name: 'fotos', maxCount: 10 },
   { name: 'soportes', maxCount: 10 }
@@ -69,7 +68,7 @@ router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles
     const prevQty = cumulative[clave] || 0;
     if (prevQty + currentQty > concept.cantidad) {
       return res.status(400).json({
-        error: `Restriccin del Art. 118 RLOPSRM: El avance acumulado para el concepto ${clave} (${(prevQty + currentQty).toFixed(2)}) excede la cantidad contratada (${concept.cantidad.toFixed(2)}) por ${(prevQty + currentQty - concept.cantidad).toFixed(2)}`
+        error: `Restricción del Art. 118 RLOPSRM: El avance acumulado para el concepto ${clave} (${(prevQty + currentQty).toFixed(2)}) excede la cantidad contratada (${concept.cantidad.toFixed(2)}) por ${(prevQty + currentQty - concept.cantidad).toFixed(2)}`
       });
     }
   }
@@ -116,18 +115,18 @@ router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles
     version_numero: 1
   });
 
-  // HU-07: el avance real del contrato cambio, reevaluar si alguna alerta de concepto debe dispararse
+  // HU-07: el avance real del contrato cambió; se reevalúan alertas por concepto.
   checkAlertasConcepto(contrato_id);
 
-  return res.status(201).json({ message: "Estimacion integrada en borrador", estimacion: newEst });
+  return res.status(201).json({ message: "Estimación integrada en borrador", estimacion: newEst });
 });
 
-// HU-13: Envio de la estimacion
+// HU-13: Envío de la estimación
 router.post('/estimaciones/:id/enviar', authenticate, authorizeRoles('contratista'), upload.single('pdf_soporte'), (req, res) => {
   const est_id = req.params.id;
   const est = store.findOne('estimaciones', e => e.id === est_id);
   if (!est) {
-    return res.status(404).json({ error: "Estimacion no encontrada" });
+    return res.status(404).json({ error: "Estimación no encontrada" });
   }
 
   const endDate = new Date(est.fecha_fin);
@@ -135,7 +134,7 @@ router.post('/estimaciones/:id/enviar', authenticate, authorizeRoles('contratist
   const diffTime = Math.abs(now - endDate);
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   if (diffDays > 6 && now > endDate) {
-    return res.status(400).json({ error: `Limite del Art. 54 LOPSRM: El plazo de presentacin (6 dias naturales) ha vencido.` });
+    return res.status(400).json({ error: `Límite del Art. 54 LOPSRM: El plazo de presentación (6 días naturales) ha vencido.` });
   }
 
   store.update('estimaciones', est_id, {
@@ -145,7 +144,7 @@ router.post('/estimaciones/:id/enviar', authenticate, authorizeRoles('contratist
   });
 
   const contract = store.findOne('contratos', c => c.id === est.contrato_id);
-  const mensaje = `Estimacion Periodo #${est.periodo_numero} del contrato ${contract ? contract.folio : est.contrato_id} fue presentada y espera revision. Plazo de revision: 15 dias naturales (Art. 54 LOPSRM).`;
+  const mensaje = `Estimación periodo #${est.periodo_numero} del contrato ${contract ? contract.folio : est.contrato_id} fue presentada y espera revisión. Plazo de revisión: 15 días naturales (Art. 54 LOPSRM).`;
   ['supervision', 'residente'].forEach(rol => {
     store.insert('notificaciones', {
       contrato_id: est.contrato_id,
@@ -158,12 +157,12 @@ router.post('/estimaciones/:id/enviar', authenticate, authorizeRoles('contratist
     });
   });
 
-  return res.json({ message: "Estimacion enviada formalmente a revision.", fecha_presentacion: now.toISOString() });
+  return res.json({ message: "Estimación enviada formalmente a revisión.", fecha_presentacion: now.toISOString() });
 });
 
 // HU-14: Historial de estimaciones con filtros por periodo y estado (AND)
-// HU-13/HU-15: incluye el semaforo de 15 dias de revision (Art. 54 LOPSRM)
-// HU-20: incluye el semaforo de 20 dias de pago (Art. 54 LOPSRM)
+// HU-13/HU-15: incluye el semáforo de 15 días de revisión (Art. 54 LOPSRM).
+// HU-20: incluye el semáforo de 20 días de pago (Art. 54 LOPSRM).
 router.get('/contratos/:id/estimaciones', authenticate, (req, res) => {
   const { periodo, estado } = req.query;
   let list = store.find('estimaciones', e => e.contrato_id === req.params.id);
@@ -183,20 +182,19 @@ router.get('/contratos/:id/estimaciones', authenticate, (req, res) => {
   return res.json(withPlazos.sort((a, b) => a.periodo_numero - b.periodo_numero));
 });
 
-// HU-15: Revision tecnica (Supervision), seccion por seccion. Cada observacion
-// trae seccion (caratula/generadores/fotos/soportes/notas), tipo, severidad y,
-// cuando aplica, el concepto del catalogo al que se refiere.
+// HU-15: revisión técnica por sección. Cada observación conserva sección,
+// tipo, severidad y, cuando aplica, el concepto del catálogo al que se refiere.
 const SECCIONES_REVISION = ['caratula', 'generadores', 'fotos', 'soportes', 'notas'];
 
 router.post('/estimaciones/:id/revisar', authenticate, authorizeRoles('supervision'), (req, res) => {
   const { observaciones } = req.body;
   const est = store.findOne('estimaciones', e => e.id === req.params.id);
   if (!est) {
-    return res.status(404).json({ error: "Estimacion no encontrada" });
+    return res.status(404).json({ error: "Estimación no encontrada" });
   }
 
   if (est.estado !== 'presentada') {
-    return res.status(400).json({ error: "La estimacion no se encuentra en estado 'presentada'." });
+    return res.status(400).json({ error: "La estimación no se encuentra en estado 'presentada'." });
   }
 
   const observacionesLista = Array.isArray(observaciones) ? observaciones : [];
@@ -221,19 +219,19 @@ router.post('/estimaciones/:id/revisar', authenticate, authorizeRoles('supervisi
     fecha_revision_supervision: new Date().toISOString()
   });
 
-  return res.json({ message: "Estimacion revisada y turnada a Residencia" });
+  return res.json({ message: "Estimación revisada y turnada a residencia" });
 });
 
-// HU-15: Autorizacion o Rechazo (Residencia)
+// HU-15: Autorización o rechazo (Residencia)
 router.post('/estimaciones/:id/resolver', authenticate, authorizeRoles('residente'), (req, res) => {
   const { resolucion, comentarios } = req.body;
   const est = store.findOne('estimaciones', e => e.id === req.params.id);
   if (!est) {
-    return res.status(404).json({ error: "Estimacion no encontrada" });
+    return res.status(404).json({ error: "Estimación no encontrada" });
   }
 
   if (est.estado !== 'en_revision') {
-    return res.status(400).json({ error: "La estimacion debe ser turnada por supervision (HU-15) antes de que residencia pueda resolverla." });
+    return res.status(400).json({ error: "La estimación debe ser turnada por supervisión (HU-15) antes de que residencia pueda resolverla." });
   }
 
   const finalState = resolucion === 'autorizada' ? 'autorizada' : 'rechazada';
@@ -245,15 +243,15 @@ router.post('/estimaciones/:id/resolver', authenticate, authorizeRoles('resident
     comentario_residencia: comentarios || ""
   });
 
-  return res.json({ message: `Estimacion resuelta como: ${finalState}` });
+  return res.json({ message: `Estimación resuelta como: ${finalState}` });
 });
 
-// HU-16: Reingreso de estimacion tras rechazo
+// HU-16: Reingreso de estimación tras rechazo
 router.post('/estimaciones/:id/reingresar', authenticate, authorizeRoles('contratista'), (req, res) => {
   const oldEstId = req.params.id;
   const oldEst = store.findOne('estimaciones', e => e.id === oldEstId);
   if (!oldEst || oldEst.estado !== 'rechazada') {
-    return res.status(400).json({ error: "La estimacion no existe o no ha sido rechazada" });
+    return res.status(400).json({ error: "La estimación no existe o no ha sido rechazada" });
   }
 
   const { avances, notas_vinculadas_ids, penalizaciones } = req.body;
@@ -294,14 +292,14 @@ router.post('/estimaciones/:id/reingresar', authenticate, authorizeRoles('contra
     estimacion_vinculada_id: oldEstId
   });
 
-  return res.status(201).json({ message: "Nueva versin de estimacion integrada (reingreso)", estimacion: newEst });
+  return res.status(201).json({ message: "Nueva versión de estimación integrada (reingreso)", estimacion: newEst });
 });
 
-// HU-16: Descargar las observaciones de una estimacion (tipicamente la version rechazada)
+// HU-16: Descargar observaciones de una estimación, normalmente la versión rechazada.
 router.get('/estimaciones/:id/observaciones/export', authenticate, async (req, res, next) => {
   try {
     const est = store.findOne('estimaciones', e => e.id === req.params.id);
-    if (!est) return res.status(404).json({ error: "Estimacion no encontrada" });
+    if (!est) return res.status(404).json({ error: "Estimación no encontrada" });
 
     const contract = store.findOne('contratos', c => c.id === est.contrato_id);
     const observaciones = est.observaciones || [];

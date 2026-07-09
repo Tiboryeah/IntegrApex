@@ -8,12 +8,12 @@
 
         let bitBtn = '';
         if (!opened && this.state.user.rol === 'residente') {
-          bitBtn = `<button class="btn btn-primary" onclick="app.aperturarBitacoraDialog()">Aperturar Bitacora</button>`;
+          bitBtn = `<button class="btn btn-primary" onclick="app.aperturarBitacoraDialog()">Aperturar bitácora</button>`;
         }
 
         document.getElementById('bitacora-status-panel').innerHTML = `
           <div class="glass-panel" style="height: 100%;">
-            <h2>Apertura Bitacora (HU-08)</h2>
+            <h2>Apertura de bitácora (HU-08)</h2>
             <p style="margin-top: 12px; margin-bottom: 12px;">Estatus: <strong style="color: ${opened ? 'var(--accent-green)' : 'var(--accent-amber)'};">${opened ? 'APERTURADA Y ACTIVA' : 'INACTIVA / PENDIENTE'}</strong></p>
             <p style="margin-bottom: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">De acuerdo con el Art. 122 RLOPSRM, requiere la entrega del sitio y las firmas del equipo asignado.</p>
             ${bitBtn}
@@ -52,7 +52,7 @@
               <td>$${(g.monto || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
             </tr>
           `).join('')
-        : `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Sin garantias capturadas desde el alta</td></tr>`;
+        : `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Sin garantías capturadas desde el alta</td></tr>`;
       const amortizacionHtml = amortizacionPlan.length
         ? amortizacionPlan.slice(0, 6).map(p => `
             <tr>
@@ -84,7 +84,7 @@
               <tr><td style="color: var(--text-muted); font-weight:600;">Monto Contratado (Sin IVA):</td><td>$${contract.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Monto Contratado (Con IVA):</td><td>$${(contract.monto * 1.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Plazo Contractual:</td><td>${contract.plazo_dias} Dias naturales</td></tr>
-              <tr><td style="color: var(--text-muted); font-weight:600;">Fecha de Inicio / Termino:</td><td>${contract.fecha_inicio} al ${contract.fecha_termino}</td></tr>
+              <tr><td style="color: var(--text-muted); font-weight:600;">Fecha de inicio / término:</td><td>${contract.fecha_inicio} al ${contract.fecha_termino}</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Modalidad de Pago:</td><td>${contract.modalidad_pago}</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">PDF de Contrato Firmado:</td><td>
                 ${contract.pdf_contrato ? `<a href="${contract.pdf_contrato}" target="_blank" style="color: var(--ipn-maroon-light); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:6px;"><span class="material-icons-round" style="font-size:16px;">open_in_new</span> Abrir PDF Respaldo</a>` : '<span style="color:var(--text-muted);">Sin PDF cargado</span>'}
@@ -105,11 +105,11 @@
               <div class="form-group">
                 <label>Seleccionar Reporte</label>
                 <select id="export-report-select" style="font-size: 13px; padding: 8px;">
-                  <option value="fisico">1. Avance Fisico de Obra</option>
+                  <option value="fisico">1. Avance físico de obra</option>
                   <option value="financiero">2. Avance Financiero</option>
                   <option value="estimaciones">3. Historial de Estimaciones</option>
                   <option value="observaciones">4. Observaciones de Revision</option>
-                  <option value="bitacora">5. Bitacora de Notas</option>
+                  <option value="bitacora">5. Bitácora de notas</option>
                   <option value="modificatorios">6. Convenios Modificatorios</option>
                   <option value="penalizaciones">7. Registro de Penalizaciones</option>
                 </select>
@@ -148,10 +148,10 @@
             </div>
           </div>
           <div class="col-12 glass-panel">
-            <h2>Garantias, Amortizacion y Penalizaciones (HU-01)</h2>
+          <h2>Garantías, amortización y penalizaciones (HU-01)</h2>
             <div class="dashboard-grid" style="margin-top:16px;">
               <div class="col-4">
-                <h3>Garantias iniciales</h3>
+                <h3>Garantías iniciales</h3>
                 <div class="table-container" style="margin-top:10px;">
                   <table>
                     <thead><tr><th>Tipo</th><th>Afianzadora</th><th>Vigencia</th><th>Monto</th></tr></thead>
@@ -173,7 +173,7 @@
                 <h3>Penalizaciones</h3>
                 <div class="table-container" style="margin-top:10px;">
                   <table>
-                    <thead><tr><th>Tipo</th><th>Descripcion</th><th>%</th></tr></thead>
+                    <thead><tr><th>Tipo</th><th>Descripción</th><th>%</th></tr></thead>
                     <tbody>${penalizacionesHtml}</tbody>
                   </table>
                 </div>
@@ -203,7 +203,7 @@
                   <option value="documentos">Documentos</option>
                   <option value="fianzas">Fianzas</option>
                   <option value="convenios">Convenios</option>
-                  <option value="bitacora">Bitacora</option>
+                  <option value="bitacora">Bitácora</option>
                   <option value="minutas">Minutas</option>
                   <option value="visitas">Visitas</option>
                 </select>
@@ -261,7 +261,7 @@
 
       outlet.innerHTML = `
         <div class="glass-panel">
-          <h2>Catalogo de Conceptos Original</h2>
+          <h2>Catálogo de conceptos original</h2>
           <div class="table-container" style="margin-top:16px;">
             <table>
               <thead>
@@ -312,7 +312,7 @@
                 <th>Bloque</th>
                 <th>Tipo</th>
                 <th>Titulo</th>
-                <th>Descripcion</th>
+                <th>Descripción</th>
                 <th>Fecha</th>
                 <th>Archivo</th>
               </tr>

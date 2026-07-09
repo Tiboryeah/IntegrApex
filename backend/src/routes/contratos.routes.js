@@ -44,17 +44,17 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.sing
   }
 
   try {
-    catalogo = parseJsonField(catalogo, [], 'Catalogo');
+    catalogo = parseJsonField(catalogo, [], 'Catálogo');
     programa = parseJsonField(programa, [], 'Programa de obra');
     juridicos = parseJsonField(juridicos, {}, 'Elementos juridicos');
-    garantias = parseJsonField(garantias, [], 'Garantias');
+    garantias = parseJsonField(garantias, [], 'Garantías');
     amortizacion_plan = parseJsonField(amortizacion_plan, [], 'Plan de amortizacion');
     penalizaciones = parseJsonField(penalizaciones, [], 'Penalizaciones');
   } catch (e) {
     return res.status(e.statusCode || 400).json({ error: e.message });
   }
 
-  // Validations
+  // Validaciones de consistencia contractual.
   const subtotal = parseFloat(monto);
   if (!Array.isArray(catalogo) || catalogo.length === 0) {
     return res.status(400).json({ error: "El catalogo de conceptos es obligatorio" });
@@ -85,7 +85,7 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.sing
   for (const tipo of requiredGuarantees) {
     const guarantee = guaranteesByType.get(tipo);
     if (!guarantee || normalizeMoney(guarantee.monto) <= 0) {
-      return res.status(400).json({ error: `La garantia de ${tipo.replace('_', ' ')} debe capturarse con monto mayor a cero` });
+      return res.status(400).json({ error: `La garantía de ${tipo.replace('_', ' ')} debe capturarse con monto mayor a cero` });
     }
   }
 
@@ -179,10 +179,10 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.sing
     creado_en: new Date().toISOString()
   });
 
-  return res.status(201).json({ message: "Contrato creado con exito", contrato: newContract });
+  return res.status(201).json({ message: "Contrato creado con éxito", contrato: newContract });
 });
 
-// GET all contracts
+// Consulta de contratos visibles para el usuario.
 router.get('/contratos', authenticate, (req, res) => {
   const all = store.getCollection('contratos');
   const user = req.user;
@@ -199,7 +199,7 @@ router.get('/contratos', authenticate, (req, res) => {
   return res.json(filtered);
 });
 
-// GET detailed contract (HU-04)
+// Consulta detallada de contrato (HU-04).
 router.get('/contratos/:id', authenticate, (req, res) => {
   const contract = store.findOne('contratos', c => c.id === req.params.id);
   if (!contract) {
