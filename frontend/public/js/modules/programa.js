@@ -244,8 +244,8 @@
     // PANEL DE ALERTAS (HU-07): Consulta las alertas por concepto y renderiza el panel lateral de vigilancia.
     renderConceptAlertsPanel(contract, trabajos) {
       fetch(`/api/contratos/${contract.id}/alertas`).then(res => res.json()).then(alerts => {
-        const rows = alerts.length === 0
-          ? `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 16px;">No hay alertas de atraso configuradas</td></tr>`
+        const listHtml = alerts.length === 0
+          ? `<div style="text-align: center; color: var(--text-muted); padding: 24px; font-size: 13px;">No hay alertas de atraso configuradas</div>`
           : alerts.map(a => this.renderConceptAlertRow(contract, trabajos, a)).join('');
         const configBtn = this.state.user.rol === 'residente'
           ? `<button class="btn btn-primary btn-sm" style="font-size:12px; padding: 6px 12px;" onclick="app.configurarAlertaDialog()">Configurar Alerta</button>`
@@ -256,8 +256,8 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
               <h2 style="font-size: 15px;">Vigilancia Conceptos (HU-07)</h2>${configBtn}
             </div>
-            <div class="table-container">
-              <table><thead><tr><th>Clave</th><th>Límite</th><th>Canal</th><th>Estado</th><th>Atraso</th><th style="text-align:center;">Acción</th></tr></thead><tbody>${rows}</tbody></table>
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
+              ${listHtml}
             </div>
           </div>
         `;
@@ -280,15 +280,30 @@
       const avanceTexto = avanceConocido ? `${alert.ultimo_avance_pct.toFixed(1)}%` : 'Sin evaluar aun';
 
       const actions = this.state.user.rol === 'residente' ? `
-        <button class="btn btn-secondary" style="padding: 4px 8px;" title="${isPaused ? 'Reactivar alerta' : 'Pausar alerta'}" onclick="app.toggleAlertaEstado('${alert.id}', '${isPaused ? 'activa' : 'pausada'}')">
-          <span class="material-icons-round" style="font-size: 16px;">${isPaused ? 'play_arrow' : 'pause'}</span>
-        </button>
-        <button class="btn btn-secondary" style="padding: 4px 8px; color: var(--ipn-maroon-light);" title="Eliminar alerta" onclick="app.eliminarAlertaConcep('${alert.id}')">
-          <span class="material-icons-round" style="font-size: 16px;">delete</span>
-        </button>
-      ` : ' - ';
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+          <button class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 4px 8px;" onclick="app.toggleAlertaEstado('${alert.id}', '${isPaused ? 'activa' : 'pausada'}')">
+            <span class="material-icons-round" style="font-size: 14px;">${isPaused ? 'play_arrow' : 'pause'}</span> ${isPaused ? 'Reactivar' : 'Pausar'}
+          </button>
+          <button class="btn btn-secondary btn-sm" style="display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 4px 8px; color: var(--accent-red);" onclick="app.eliminarAlertaConcep('${alert.id}')">
+            <span class="material-icons-round" style="font-size: 14px;">delete</span> Eliminar
+          </button>
+        </div>
+      ` : '';
 
-      return `<tr><td><strong>${alert.concept_key}</strong></td><td>${alert.limite_desviacion}%</td><td>${alert.canal || 'sistema'}</td><td>${statusBadge}</td><td>${avanceTexto}</td><td style="text-align:center;">${actions}</td></tr>`;
+      return `
+        <div class="alert-concept-item" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; background: rgba(255,255,255,0.4); text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="user-badge" style="background: var(--ipn-maroon); color: white; border: none; font-weight: 700; margin: 0; font-size: 11px;">${alert.concept_key}</span>
+            ${statusBadge}
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 4px;">
+            <div>Límite: <strong style="color: #0f172a;">${alert.limite_desviacion}%</strong></div>
+            <div>Canal: <strong style="color: #0f172a; text-transform: capitalize;">${alert.canal || 'sistema'}</strong></div>
+            <div style="grid-column: span 2;">Avance / Desviación: <strong style="color: ${isFired ? 'var(--accent-red)' : '#0f172a'};">${avanceTexto}</strong></div>
+          </div>
+          ${actions}
+        </div>
+      `;
     },
 
     // REGISTRAR TRABAJOS (HU-06): Abre el modal para capturar las cantidades ejecutadas y vincularlas a una nota de bitácora.
