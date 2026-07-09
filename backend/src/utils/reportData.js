@@ -102,9 +102,20 @@ const REPORT_DEFINITIONS = {
     label: 'Observaciones de Revision',
     columns: [
       { header: 'Periodo', key: 'periodo' },
+      { header: 'Seccion', key: 'seccion' },
+      { header: 'Concepto', key: 'concepto' },
+      { header: 'Tipo', key: 'tipo' },
+      { header: 'Severidad', key: 'severidad' },
       { header: 'Observacion Tecnica', key: 'comentario' }
     ],
-    rows: data => data.observaciones.map(o => ({ periodo: o.periodo, comentario: o.comentario || '' }))
+    rows: data => data.observaciones.map(o => ({
+      periodo: o.periodo,
+      seccion: o.seccion || '',
+      concepto: o.concepto || '',
+      tipo: o.tipo || '',
+      severidad: o.severidad || '',
+      comentario: o.comentario || ''
+    }))
   },
   bitacora: {
     label: 'Bitacora de Notas',

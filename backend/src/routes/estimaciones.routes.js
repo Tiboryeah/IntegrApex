@@ -6,21 +6,44 @@ const { upload } = require('../middleware/upload');
 const { buildWorkbookBuffer, sendXlsx } = require('../utils/xlsxExport');
 const { buildTablePdfBuffer, sendPdf } = require('../utils/pdfExport');
 const { calcularPlazoLegal } = require('../utils/plazosLegales');
+const { parseJsonField } = require('../utils/validators');
 
 const router = express.Router();
 
-// HU-12: Integracion de estimacion
-router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles('contratista'), (req, res) => {
+// HU-12: Integracion de estimacion. La estimacion se integra como una sola
+// entidad: caratula (calculada), generadores (avances), registro fotografico
+// y soportes (cargados aqui mismo, no hasta el envio de HU-13) y notas de
+// bitacora seleccionadas desde el buscador de HU-10.
+router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles('contratista'), upload.fields([
+  { name: 'fotos', maxCount: 10 },
+  { name: 'soportes', maxCount: 10 }
+]), (req, res) => {
   const contrato_id = req.params.id;
-  const { periodo_numero, fecha_inicio, fecha_fin, avances, notas_vinculadas_ids, penalizaciones } = req.body;
+  const { periodo_numero, fecha_inicio, fecha_fin, penalizaciones } = req.body;
+  let { avances, notas_vinculadas_ids } = req.body;
 
   if (!periodo_numero || !fecha_inicio || !fecha_fin || !avances) {
     return res.status(400).json({ error: "Faltan campos requeridos" });
   }
 
+  try {
+    avances = parseJsonField(avances, {}, 'Avances');
+    notas_vinculadas_ids = parseJsonField(notas_vinculadas_ids, [], 'Notas vinculadas');
+  } catch (e) {
+    return res.status(e.statusCode || 400).json({ error: e.message });
+  }
+
   const contract = store.findOne('contratos', c => c.id === contrato_id);
   if (!contract) {
     return res.status(404).json({ error: "Contrato no encontrado" });
+  }
+
+  if (Array.isArray(notas_vinculadas_ids) && notas_vinculadas_ids.length) {
+    const notasValidas = store.find('notas', n => n.contrato_id === contrato_id).map(n => n.id);
+    const idsInvalidos = notas_vinculadas_ids.filter(id => !notasValidas.includes(id));
+    if (idsInvalidos.length) {
+      return res.status(400).json({ error: `Las siguientes notas no pertenecen a este contrato: ${idsInvalidos.join(', ')}` });
+    }
   }
 
   const prevEstimations = store.find('estimaciones', e => e.contrato_id === contrato_id && e.estado !== 'rechazada');
@@ -67,6 +90,9 @@ router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles
   const penalizacionesMonto = parseFloat(penalizaciones || 0);
   const liquidoAPagar = totalEstimado - amortizacionAnticipo - retencion5Millar - penalizacionesMonto;
 
+  const fotos = (req.files && req.files.fotos) ? req.files.fotos.map(f => ({ path: `/uploads/${f.filename}`, nombre: f.originalname })) : [];
+  const soportes = (req.files && req.files.soportes) ? req.files.soportes.map(f => ({ path: `/uploads/${f.filename}`, nombre: f.originalname })) : [];
+
   const newEst = store.insert('estimaciones', {
     contrato_id,
     periodo_numero: parseInt(periodo_numero),
@@ -75,6 +101,8 @@ router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles
     fecha_creacion: new Date().toISOString(),
     avances,
     notas_vinculadas_ids: notas_vinculadas_ids || [],
+    fotos,
+    soportes,
     subtotal: subtotalEstimado,
     iva,
     total: totalEstimado,
@@ -151,7 +179,11 @@ router.get('/contratos/:id/estimaciones', authenticate, (req, res) => {
   return res.json(withPlazos.sort((a, b) => a.periodo_numero - b.periodo_numero));
 });
 
-// HU-15: Revision tecnica (Supervision)
+// HU-15: Revision tecnica (Supervision), seccion por seccion. Cada observacion
+// trae seccion (caratula/generadores/fotos/soportes/notas), tipo, severidad y,
+// cuando aplica, el concepto del catalogo al que se refiere.
+const SECCIONES_REVISION = ['caratula', 'generadores', 'fotos', 'soportes', 'notas'];
+
 router.post('/estimaciones/:id/revisar', authenticate, authorizeRoles('supervision'), (req, res) => {
   const { observaciones } = req.body;
   const est = store.findOne('estimaciones', e => e.id === req.params.id);
@@ -163,9 +195,25 @@ router.post('/estimaciones/:id/revisar', authenticate, authorizeRoles('supervisi
     return res.status(400).json({ error: "La estimacion no se encuentra en estado 'presentada'." });
   }
 
+  const observacionesLista = Array.isArray(observaciones) ? observaciones : [];
+  for (const obs of observacionesLista) {
+    if (!obs.seccion || !SECCIONES_REVISION.includes(obs.seccion)) {
+      return res.status(400).json({ error: `Cada observacion debe indicar una seccion valida: ${SECCIONES_REVISION.join(', ')}` });
+    }
+    if (!obs.comentario) {
+      return res.status(400).json({ error: "Cada observacion debe incluir un comentario" });
+    }
+  }
+
   store.update('estimaciones', est.id, {
     estado: "en_revision",
-    observaciones: observaciones || [],
+    observaciones: observacionesLista.map(o => ({
+      seccion: o.seccion,
+      concepto: o.concepto || null,
+      tipo: o.tipo || 'General',
+      severidad: o.severidad || 'Media',
+      comentario: o.comentario
+    })),
     fecha_revision_supervision: new Date().toISOString()
   });
 
@@ -256,9 +304,20 @@ router.get('/estimaciones/:id/observaciones/export', authenticate, async (req, r
 
     const columns = [
       { header: '#', key: 'num', width: 6 },
-      { header: 'Observacion', key: 'comentario', width: 70 }
+      { header: 'Seccion', key: 'seccion', width: 16 },
+      { header: 'Concepto', key: 'concepto', width: 14 },
+      { header: 'Tipo', key: 'tipo', width: 16 },
+      { header: 'Severidad', key: 'severidad', width: 14 },
+      { header: 'Observacion', key: 'comentario', width: 60 }
     ];
-    const rows = observaciones.map((o, idx) => ({ num: idx + 1, comentario: o.comentario || '' }));
+    const rows = observaciones.map((o, idx) => ({
+      num: idx + 1,
+      seccion: o.seccion || '',
+      concepto: o.concepto || '',
+      tipo: o.tipo || '',
+      severidad: o.severidad || '',
+      comentario: o.comentario || ''
+    }));
 
     const title = `Observaciones - Periodo #${est.periodo_numero} (${est.estado})`;
     const subtitle = [

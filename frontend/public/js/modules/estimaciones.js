@@ -257,8 +257,9 @@
       this.renderEstimacionesScreen();
     },
 
-    integrarEstimacionForm() {
+    async integrarEstimacionForm() {
       const contract = this.state.currentContractData;
+      const notasSeleccionadas = new Set();
 
       let conceptInputs = '';
       contract.catalogo.forEach(c => {
@@ -273,7 +274,7 @@
       this.showModal(`
         <h2>Integrar Estimacion de Obra (HU-12)</h2>
         <p style="margin-bottom: 16px; font-size:13px; color:var(--text-muted); line-height:1.4;">
-          De acuerdo con el Art. 132 RLOPSRM, asiente los generadores del periodo. El sistema calcula retenciones del 5 al millar (Art. 191 LFD) y amortizacion.
+          De acuerdo con el Art. 132 RLOPSRM, asiente los generadores, el registro fotografico, los soportes y las notas de bitacora del periodo como un solo bloque. El sistema calcula retenciones del 5 al millar (Art. 191 LFD) y amortizacion.
         </p>
         <form id="integrar-est-form" style="max-height: 70vh; overflow-y: auto; padding-right:10px;">
           <div class="dashboard-grid" style="gap:15px;">
@@ -290,16 +291,46 @@
               <input type="date" id="est-f-fin" required>
             </div>
 
-            <div class="col-12"><h3 style="margin-top:10px; font-size:14px; color:var(--primary);">Cantidades Ejecutadas del Periodo</h3></div>
+            <div class="col-12"><h3 style="margin-top:10px; font-size:14px; color:var(--primary);">Cantidades Ejecutadas del Periodo (Generadores)</h3></div>
             ${conceptInputs}
 
             <div class="col-6 form-group">
               <label>Penalizaciones / Deductivas ($)</label>
               <input type="number" id="est-penalizaciones" value="0">
             </div>
+
+            <div class="col-12"><h3 style="margin-top:10px; font-size:14px; color:var(--primary);">Registro Fotografico y Soportes</h3></div>
             <div class="col-6 form-group">
-              <label>Nota Bitacora Vinculada (ID)</label>
-              <input type="number" id="est-vinculos" placeholder="Ej. 2">
+              <label>Fotos del avance (opcional, varias)</label>
+              <input type="file" id="est-fotos" accept="image/*" multiple>
+            </div>
+            <div class="col-6 form-group">
+              <label>Soportes / documentos (PDF, opcional, varios)</label>
+              <input type="file" id="est-soportes" accept=".pdf" multiple>
+            </div>
+
+            <div class="col-12"><h3 style="margin-top:10px; font-size:14px; color:var(--primary);">Notas de Bitacora Vinculadas (buscador HU-10)</h3></div>
+            <div class="col-4 form-group" style="margin-bottom:0;">
+              <label>Tipo</label>
+              <select id="est-notas-tipo">
+                <option value="">Todos</option>
+                <option value="Apertura">Apertura</option>
+                <option value="Avance">Avance</option>
+                <option value="Solicitud">Solicitud</option>
+                <option value="Entrega">Entrega</option>
+                <option value="Autorizacion">Autorizacion</option>
+                <option value="Incidencia">Incidencia</option>
+              </select>
+            </div>
+            <div class="col-8 form-group" style="margin-bottom:0;">
+              <label>Buscar</label>
+              <input type="text" id="est-notas-query" placeholder="Palabra clave...">
+            </div>
+            <div class="col-12">
+              <div id="est-notas-lista" style="max-height:180px; overflow-y:auto; border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                Cargando notas...
+              </div>
+              <p style="font-size:11.5px; color:var(--text-muted); margin-top:6px;"><span id="est-notas-contador">0</span> nota(s) seleccionada(s).</p>
             </div>
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
@@ -308,6 +339,44 @@
           </div>
         </form>
       `);
+
+      const cargarNotasPicker = async () => {
+        const lista = document.getElementById('est-notas-lista');
+        const tipo = document.getElementById('est-notas-tipo').value;
+        const query = document.getElementById('est-notas-query').value;
+        const params = new URLSearchParams();
+        if (tipo) params.set('tipo', tipo);
+        if (query) params.set('query', query);
+
+        try {
+          const notas = await this.api(`/api/contratos/${contract.id}/bitacora/notas?${params.toString()}`);
+          lista.innerHTML = notas.length === 0
+            ? '<div style="color:var(--text-muted); font-size:12.5px;">Sin notas que coincidan con el filtro.</div>'
+            : notas.map(n => `
+                <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid var(--border-color); font-size:12.5px; cursor:pointer;">
+                  <input type="checkbox" class="est-nota-checkbox" value="${n.id}" ${notasSeleccionadas.has(n.id) ? 'checked' : ''} style="margin-top:2px;">
+                  <span><strong>Nota #${n.folio}</strong> (${n.tipo}) - ${(n.contenido || '').slice(0, 80)}${(n.contenido || '').length > 80 ? '...' : ''}</span>
+                </label>
+              `).join('');
+
+          document.querySelectorAll('.est-nota-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+              if (cb.checked) notasSeleccionadas.add(cb.value);
+              else notasSeleccionadas.delete(cb.value);
+              document.getElementById('est-notas-contador').textContent = notasSeleccionadas.size;
+            });
+          });
+        } catch (e) {
+          lista.innerHTML = '<div style="color:var(--accent-red); font-size:12.5px;">No se pudieron cargar las notas.</div>';
+        }
+      };
+
+      document.getElementById('est-notas-tipo').addEventListener('change', cargarNotasPicker);
+      document.getElementById('est-notas-query').addEventListener('input', () => {
+        clearTimeout(this.state.estNotasFiltroTimer);
+        this.state.estNotasFiltroTimer = setTimeout(cargarNotasPicker, 300);
+      });
+      await cargarNotasPicker();
 
       document.getElementById('integrar-est-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -318,25 +387,30 @@
           avances[i.dataset.clave] = parseFloat(i.value || 0);
         });
 
-        const payload = {
-          periodo_numero: document.getElementById('est-periodo').value,
-          fecha_inicio: document.getElementById('est-f-ini').value,
-          fecha_fin: document.getElementById('est-f-fin').value,
-          avances,
-          penalizaciones: document.getElementById('est-penalizaciones').value,
-          notes_vinculadas_ids: document.getElementById('est-vinculos').value ? [parseInt(document.getElementById('est-vinculos').value)] : []
-        };
+        const formData = new FormData();
+        formData.append('periodo_numero', document.getElementById('est-periodo').value);
+        formData.append('fecha_inicio', document.getElementById('est-f-ini').value);
+        formData.append('fecha_fin', document.getElementById('est-f-fin').value);
+        formData.append('penalizaciones', document.getElementById('est-penalizaciones').value);
+        formData.append('avances', JSON.stringify(avances));
+        formData.append('notas_vinculadas_ids', JSON.stringify([...notasSeleccionadas]));
+
+        Array.from(document.getElementById('est-fotos').files).forEach(f => formData.append('fotos', f));
+        Array.from(document.getElementById('est-soportes').files).forEach(f => formData.append('soportes', f));
 
         try {
-          await this.api(`/api/contratos/${this.state.currentContractId}/estimaciones/integrar`, {
+          const res = await fetch(`/api/contratos/${this.state.currentContractId}/estimaciones/integrar`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: formData
           });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
           this.showToast('Estimacion integrada en borrador con exito', 'success');
           this.closeModal();
           this.renderEstimacionesScreen();
-        } catch (err) {}
+        } catch (err) {
+          this.showToast(err.message, 'error');
+        }
       });
     },
 
@@ -356,6 +430,14 @@
         const est = await this.api(`/api/contratos/${this.state.currentContractId}/estimaciones`);
         const data = est.find(e => e.id === estId);
         const contract = this.state.currentContractData;
+
+        let notasVinculadas = [];
+        if ((data.notas_vinculadas_ids || []).length) {
+          try {
+            const todasLasNotas = await this.api(`/api/contratos/${this.state.currentContractId}/bitacora/notas`);
+            notasVinculadas = todasLasNotas.filter(n => data.notas_vinculadas_ids.includes(n.id));
+          } catch (e) {}
+        }
 
         let actionPanel = '';
 
@@ -409,8 +491,19 @@
         }
 
         if (data.estado === 'rechazada') {
+          const severidadBadge = { Baja: 'badge-authorized', Media: 'badge-presented', Alta: 'badge-review', Critica: 'badge-rejected' };
           const observacionesList = (data.observaciones || []).length
-            ? `<ul style="margin:12px 0; padding-left:18px; font-size:13px; color:#334155; line-height:1.6;">${(data.observaciones || []).map(o => `<li>${o.comentario || ''}</li>`).join('')}</ul>`
+            ? `<div style="margin:12px 0;">${(data.observaciones || []).map(o => `
+                <div style="border:1px solid var(--border-color); border-radius:6px; padding:10px; margin-bottom:8px;">
+                  <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                    <span class="badge badge-review" style="text-transform:capitalize;">${o.seccion || 'General'}</span>
+                    ${o.concepto ? `<span class="badge badge-presented">${o.concepto}</span>` : ''}
+                    ${o.tipo ? `<span class="badge badge-presented">${o.tipo}</span>` : ''}
+                    ${o.severidad ? `<span class="badge ${severidadBadge[o.severidad] || 'badge-presented'}">${o.severidad}</span>` : ''}
+                  </div>
+                  <p style="font-size:13px; color:#334155; margin:0;">${o.comentario || ''}</p>
+                </div>
+              `).join('')}</div>`
             : `<p style="font-size:13px; color:var(--text-muted); margin-top:12px;">No se registraron observaciones detalladas.</p>`;
           const reingresarBtn = this.state.user.rol === 'contratista'
             ? `<button class="btn btn-primary" onclick="app.reingresarEstimacionForm('${data.id}')">Reingresar Nueva Version</button>`
@@ -517,6 +610,33 @@
               </div>
             </div>
 
+            <div class="glass-panel">
+              <h2>Anexos del Periodo (HU-12)</h2>
+              <div class="dashboard-grid" style="margin-top:16px;">
+                <div class="col-4">
+                  <h3>Registro Fotografico</h3>
+                  ${(data.fotos || []).length === 0
+                    ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin fotos cargadas</p>'
+                    : `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">${data.fotos.map(f => `<a href="${f.path}" target="_blank"><img src="${f.path}" alt="${f.nombre}" style="width:64px; height:64px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color);"></a>`).join('')}</div>`
+                  }
+                </div>
+                <div class="col-4">
+                  <h3>Soportes</h3>
+                  ${(data.soportes || []).length === 0
+                    ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin soportes cargados</p>'
+                    : `<ul class="doc-list">${data.soportes.map(s => `<li><a href="${s.path}" target="_blank">${s.nombre}</a></li>`).join('')}</ul>`
+                  }
+                </div>
+                <div class="col-4">
+                  <h3>Notas de Bitacora Vinculadas</h3>
+                  ${notasVinculadas.length === 0
+                    ? '<p style="font-size:12.5px; color:var(--text-muted); margin-top:8px;">Sin notas vinculadas</p>'
+                    : `<ul class="doc-list">${notasVinculadas.map(n => `<li>Nota #${n.folio} (${n.tipo})</li>`).join('')}</ul>`
+                  }
+                </div>
+              </div>
+            </div>
+
             ${actionPanel}
           </div>
         `;
@@ -558,14 +678,72 @@
       } catch(e) {}
     },
 
+    filaObservacionRevisionHtml() {
+      const contract = this.state.currentContractData;
+      const opcionesConcepto = contract.catalogo.map(c => `<option value="${c.clave}">${c.clave}</option>`).join('');
+      return `
+        <div class="turn-obs-row dashboard-grid" style="gap:8px; margin-bottom:10px; border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+          <div class="col-3 form-group" style="margin-bottom:0;">
+            <label>Seccion</label>
+            <select class="obs-seccion">
+              <option value="caratula">Caratula</option>
+              <option value="generadores">Generadores</option>
+              <option value="fotos">Registro Fotografico</option>
+              <option value="soportes">Soportes</option>
+              <option value="notas">Notas</option>
+            </select>
+          </div>
+          <div class="col-3 form-group" style="margin-bottom:0;">
+            <label>Concepto (opcional)</label>
+            <select class="obs-concepto">
+              <option value="">N/A</option>
+              ${opcionesConcepto}
+            </select>
+          </div>
+          <div class="col-2 form-group" style="margin-bottom:0;">
+            <label>Tipo</label>
+            <select class="obs-tipo">
+              <option>Faltante</option>
+              <option>Incompleto</option>
+              <option>Incorrecto</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="col-2 form-group" style="margin-bottom:0;">
+            <label>Severidad</label>
+            <select class="obs-severidad">
+              <option>Baja</option>
+              <option selected>Media</option>
+              <option>Alta</option>
+              <option>Critica</option>
+            </select>
+          </div>
+          <div class="col-2" style="display:flex; align-items:flex-end;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.turn-obs-row').remove()">Quitar</button>
+          </div>
+          <div class="col-12 form-group" style="margin-bottom:0;">
+            <label>Comentario</label>
+            <textarea class="obs-comentario" rows="2" placeholder="Describa la observacion de esta seccion..." required></textarea>
+          </div>
+        </div>
+      `;
+    },
+
+    agregarFilaObservacionRevision() {
+      document.getElementById('turn-obs-rows').insertAdjacentHTML('beforeend', this.filaObservacionRevisionHtml());
+    },
+
     turnarAResidenteDialog(estId) {
       this.showModal(`
-        <h2>Turnar a Residencia con Observaciones (HU-15)</h2>
-        <form id="turn-est-form" style="margin-top:16px;">
-          <div class="form-group">
-            <label>Observaciones Tecnicas (por concepto)</label>
-            <textarea id="turn-obs" rows="4" placeholder="Indique observaciones..." required></textarea>
-          </div>
+        <h2>Revision Tecnica por Seccion (HU-15)</h2>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+          Conforme al Art. 53 LOPSRM, revise la estimacion seccion por seccion (caratula, generadores, registro fotografico, soportes y notas) antes de turnarla a Residencia.
+        </p>
+        <form id="turn-est-form" style="max-height:60vh; overflow-y:auto; padding-right:10px;">
+          <div id="turn-obs-rows">${this.filaObservacionRevisionHtml()}</div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="app.agregarFilaObservacionRevision()">
+            <span class="material-icons-round" style="font-size:14px;">add</span> Agregar observacion
+          </button>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
             <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancelar</button>
             <button type="submit" class="btn btn-primary">Turnar a Residencia</button>
@@ -575,11 +753,25 @@
 
       document.getElementById('turn-est-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        const observaciones = [...document.querySelectorAll('.turn-obs-row')].map(row => ({
+          seccion: row.querySelector('.obs-seccion').value,
+          concepto: row.querySelector('.obs-concepto').value || null,
+          tipo: row.querySelector('.obs-tipo').value,
+          severidad: row.querySelector('.obs-severidad').value,
+          comentario: row.querySelector('.obs-comentario').value
+        }));
+
+        if (observaciones.length === 0) {
+          this.showToast('Agregue al menos una observacion antes de turnar', 'info');
+          return;
+        }
+
         try {
           await this.api(`/api/estimaciones/${estId}/revisar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ observaciones: [{ comentario: document.getElementById('turn-obs').value }] })
+            body: JSON.stringify({ observaciones })
           });
           this.showToast('Turnado exitoso', 'success');
           this.closeModal();
