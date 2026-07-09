@@ -1,5 +1,14 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// Genera un id unico. Varias colecciones comparten el mismo prefijo de 3 letras
+// (p. ej. "contratos" y "contrato_versiones" ambas producen "con"), y el id es
+// la clave primaria de una sola tabla compartida (document_store), asi que el
+// prefijo por si solo no evita colisiones entre colecciones distintas.
+function generateId(collectionName) {
+  return `${collectionName.substring(0, 3)}_${crypto.randomUUID()}`;
+}
 
 const DB_PATH = path.join(__dirname, '..', '..', 'data', 'db.json');
 
@@ -193,7 +202,7 @@ class SqliteStore {
           if (Array.isArray(records)) {
             records.forEach(record => {
               if (!record.id) {
-                record.id = `${collectionName.substring(0,3)}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+                record.id = generateId(collectionName);
               }
               insertStmt.run(record.id, collectionName, JSON.stringify(record));
             });
@@ -222,7 +231,7 @@ class SqliteStore {
   }
 
   insert(collectionName, record) {
-    const id = record.id || `${collectionName.substring(0,3)}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const id = record.id || generateId(collectionName);
     const newRecord = { id, ...record };
     const stmt = this.db.prepare("INSERT INTO document_store (id, collection_name, data) VALUES (?, ?, ?)");
     stmt.run(id, collectionName, JSON.stringify(newRecord));
