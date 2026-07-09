@@ -1,23 +1,20 @@
+# Dependencias
 node_modules/
 backend/node_modules/
 
-# Runtime state, regenerated from backend/src/db/store.js initialState.
-# store.js resolves its DB path to backend/data/db.json (not the root data/ folder).
+# Base de datos y archivos cargados
 backend/data/db.json
 backend/data/uploads/*
 !backend/data/uploads/.gitkeep
 backend/data/*.db
-
-# Stale leftover folder, unused by current code paths (server.js/store.js both
-# resolve to backend/data/, not this one). Left on disk untouched, just untracked.
 /data/
 
-# Intento previo fuera del alcance de esta entrega.
+# Temporales y respaldos
 IntegrApex-main/
 IntegrApex-main.zip
 
-# Local runtime logs
+# Logs
 backend/server*.log
 
-# Test runner scratch files
+# Reportes y temporales de pruebas
 tests/.artifacts/
