@@ -164,6 +164,21 @@
                 <input type="number" id="n-vinculo" placeholder="Opcional">
               </div>
               <div class="form-group">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" id="n-es-correccion"> Es una correccion formal de la nota vinculada (formato Dice / Debe decir, HU-09)
+                </label>
+              </div>
+              <div id="n-correccion-fields" style="display:none;">
+                <div class="form-group">
+                  <label>Dice (texto original de la nota vinculada)</label>
+                  <textarea id="n-dice" rows="2" placeholder="Se autocompleta con el contenido de la nota vinculada, editable si es necesario"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Debe decir (correccion)</label>
+                  <textarea id="n-debe-decir" rows="2" placeholder="Texto correcto..."></textarea>
+                </div>
+              </div>
+              <div class="form-group">
                 <label>Referencia (Minuta / Visita, HU-11)</label>
                 <select id="n-referencia">
                   <option value="">Ninguna</option>
@@ -175,9 +190,9 @@
                   </optgroup>
                 </select>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="n-contenido-wrapper">
                 <label>Contenido</label>
-                <textarea id="n-contenido" rows="5" placeholder="Asiente hechos..." required></textarea>
+                <textarea id="n-contenido" rows="5" placeholder="Asiente hechos..."></textarea>
               </div>
               <button type="submit" class="btn btn-primary" style="width: 100%;">Emitir y Firmar Nota</button>
             </form>
@@ -221,6 +236,23 @@
         this.submitNewNote();
       });
 
+      const esCorreccionCheckbox = document.getElementById('n-es-correccion');
+      const correccionFields = document.getElementById('n-correccion-fields');
+      const contenidoWrapper = document.getElementById('n-contenido-wrapper');
+      const vinculoInput = document.getElementById('n-vinculo');
+      const diceField = document.getElementById('n-dice');
+
+      const toggleCorreccionMode = () => {
+        const activo = esCorreccionCheckbox.checked;
+        correccionFields.style.display = activo ? 'block' : 'none';
+        contenidoWrapper.style.display = activo ? 'none' : 'block';
+        if (activo) this.autocompletarNotaDice();
+      };
+      esCorreccionCheckbox.addEventListener('change', toggleCorreccionMode);
+      vinculoInput.addEventListener('change', () => {
+        if (esCorreccionCheckbox.checked) this.autocompletarNotaDice();
+      });
+
       this.loadBitacoraNotes({ populateFirmantes: true });
     },
 
@@ -260,6 +292,7 @@
 
       try {
         const notes = await this.api(`/api/contratos/${this.state.currentContractId}/bitacora/notas?${params.toString()}`);
+        this.state.bitacoraNotesCache = notes;
 
         if (opts.populateFirmantes) {
           this.populateFirmanteOptions(notes);
@@ -284,10 +317,23 @@
             if (n.vinculo_nota_id) {
               linkBadge = `<span class="user-badge" style="background: #fffbeb; color:#92400e; border:none; margin: 0; font-size:10px;">Vnculo: Nota #${n.vinculo_nota_id}</span>`;
             }
+            let correccionBadge = '';
+            if (n.correccion) {
+              correccionBadge = `<span class="user-badge" style="background: #fef2f2; color:#b91c1c; border:none; margin: 0; font-size:10px;">Correccion (Dice/Debe decir)</span>`;
+            }
             let referenciaBadge = '';
             if (n.referencia_tipo && n.referencia_id) {
               referenciaBadge = `<span class="user-badge" style="background: #eff6ff; color:#1d4ed8; border:none; margin: 0; font-size:10px; text-transform:capitalize;">${n.referencia_tipo} adjunta</span>`;
             }
+
+            const contenidoHtml = n.correccion
+              ? `
+                <div style="font-size:13px; line-height:1.6; color:#334155;">
+                  <div style="margin-bottom:6px;"><strong style="color:#b91c1c;">Dice:</strong> <span style="text-decoration:line-through; color:#94a3b8;">${n.correccion.dice}</span></div>
+                  <div><strong style="color:#15803d;">Debe decir:</strong> ${n.correccion.debe_decir}</div>
+                </div>
+              `
+              : `<p style="font-size:13.5px; line-height: 1.5; white-space: pre-line; color:#334155;">${n.contenido}</p>`;
 
             html += `
               <div class="glass-panel" style="margin-bottom: 16px;">
@@ -297,13 +343,14 @@
                     <span class="user-badge" style="background: var(--primary); font-weight:700; color:white; border:none;">Nota #${n.folio}</span>
                     <span class="user-badge" style="text-transform: capitalize; background:#f1f5f9; color:#475569; border:none;">${n.tipo}</span>
                     ${linkBadge}
+                    ${correccionBadge}
                     ${referenciaBadge}
                   </div>
                   <div style="font-size:11.5px; color:var(--text-muted);">
                     ${new Date(n.fecha).toLocaleString()}
                   </div>
                 </div>
-                <p style="font-size:13.5px; line-height: 1.5; white-space: pre-line; color:#334155;">${n.contenido}</p>
+                ${contenidoHtml}
 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; border-top:1px dashed var(--border-color); padding-top:10px; font-size:10.5px; color:var(--text-muted);">
                   <span>Emitido por: <strong>${n.creado_por_nombre}</strong> (${n.creado_por_rol})</span>
@@ -324,12 +371,47 @@
       } catch (e) {}
     },
 
+    // HU-09: autocompleta el campo "Dice" con el contenido real de la nota vinculada
+    async autocompletarNotaDice() {
+      const folio = parseInt(document.getElementById('n-vinculo').value, 10);
+      const diceField = document.getElementById('n-dice');
+      if (!diceField) return;
+      if (!folio) { diceField.value = ''; return; }
+
+      let nota = (this.state.bitacoraNotesCache || []).find(n => n.folio === folio);
+      if (!nota) {
+        try {
+          const all = await this.api(`/api/contratos/${this.state.currentContractId}/bitacora/notas`, {}, true);
+          nota = all.find(n => n.folio === folio);
+        } catch (e) {}
+      }
+      diceField.value = nota ? nota.contenido : '';
+      if (!nota) this.showToast(`No se encontro la nota #${folio} para autocompletar "Dice"`, 'info');
+    },
+
     async submitNewNote() {
       const tipo = document.getElementById('n-tipo').value;
       const vinculo = document.getElementById('n-vinculo').value;
+      const esCorreccion = document.getElementById('n-es-correccion').checked;
       const contenido = document.getElementById('n-contenido').value;
+      const dice = document.getElementById('n-dice').value;
+      const debeDecir = document.getElementById('n-debe-decir').value;
       const referencia = document.getElementById('n-referencia').value;
       const [referencia_tipo, referencia_id] = referencia ? referencia.split(':') : [null, null];
+
+      if (esCorreccion) {
+        if (!vinculo) {
+          this.showToast('Indica el folio de la nota que estas corrigiendo', 'error');
+          return;
+        }
+        if (!dice.trim() || !debeDecir.trim()) {
+          this.showToast('Completa "Dice" y "Debe decir" para registrar la correccion', 'error');
+          return;
+        }
+      } else if (!contenido.trim()) {
+        this.showToast('El contenido de la nota es obligatorio', 'error');
+        return;
+      }
 
       try {
         await this.api(`/api/contratos/${this.state.currentContractId}/bitacora/notas`, {
@@ -337,15 +419,22 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tipo,
-            contenido,
+            contenido: esCorreccion ? undefined : contenido,
             vinculo_nota_id: vinculo ? parseInt(vinculo) : null,
+            dice: esCorreccion ? dice : undefined,
+            debe_decir: esCorreccion ? debeDecir : undefined,
             referencia_tipo,
             referencia_id
           })
         });
-        this.showToast('Nota registrada y firmada electrunicamente', 'success');
+        this.showToast(esCorreccion ? 'Correccion (Dice/Debe decir) registrada y firmada' : 'Nota registrada y firmada electrunicamente', 'success');
         document.getElementById('n-contenido').value = '';
         document.getElementById('n-vinculo').value = '';
+        document.getElementById('n-dice').value = '';
+        document.getElementById('n-debe-decir').value = '';
+        document.getElementById('n-es-correccion').checked = false;
+        document.getElementById('n-correccion-fields').style.display = 'none';
+        document.getElementById('n-contenido-wrapper').style.display = 'block';
         document.getElementById('n-referencia').value = '';
         this.loadBitacoraNotes();
       } catch (err) {}

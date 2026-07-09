@@ -314,6 +314,7 @@
                 <th>Titulo</th>
                 <th>Descripcion</th>
                 <th>Fecha</th>
+                <th>Archivo</th>
               </tr>
             </thead>
             <tbody>
@@ -324,6 +325,7 @@
                   <td><strong>${r.titulo}</strong></td>
                   <td>${r.descripcion || ''}</td>
                   <td>${r.fecha ? new Date(r.fecha).toLocaleDateString('es-MX') : 'N/A'}</td>
+                  <td>${r.archivo ? `<a href="${r.archivo}" target="_blank" style="color: var(--ipn-maroon-light); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:4px;"><span class="material-icons-round" style="font-size:15px;">download</span> Descargar</a>` : '<span style="color:var(--text-muted); font-size:12px;">Sin archivo</span>'}</td>
                 </tr>
               `).join('')}
             </tbody>

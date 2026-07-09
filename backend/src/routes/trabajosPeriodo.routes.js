@@ -3,6 +3,7 @@ const express = require('express');
 const store = require('../db/store');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
 const { parseJsonField, normalizeMoney } = require('../utils/validators');
+const { checkAlertasConcepto } = require('../jobs/alertasScheduler');
 
 const router = express.Router();
 
@@ -68,6 +69,10 @@ router.post('/contratos/:id/trabajos-periodo', authenticate, authorizeRoles('con
       creado_por_nombre: req.user.nombre,
       creado_en: new Date().toISOString()
     });
+
+    // HU-07: el avance real del contrato cambio, reevaluar si alguna alerta de concepto debe dispararse
+    checkAlertasConcepto(contrato_id);
+
     return res.status(201).json({ message: "Trabajos terminados registrados con exito", trabajo });
   } catch (e) {
     return res.status(e.statusCode || 400).json({ error: e.message });

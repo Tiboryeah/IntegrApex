@@ -6,6 +6,7 @@ const path = require('path');
 const routes = require('./src/routes');
 const errorHandler = require('./src/middleware/errorHandler');
 const { uploadsDir } = require('./src/middleware/upload');
+const { startScheduler } = require('./src/jobs/alertasScheduler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,4 +33,5 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`IntegrApex Server running on port ${PORT}`);
+  startScheduler();
 });

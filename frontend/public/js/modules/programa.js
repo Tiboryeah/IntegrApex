@@ -262,14 +262,16 @@
     renderConceptAlertRow(contract, trabajos, alert) {
       const concept = contract.catalogo.find(c => c.clave === alert.concept_key);
       if (!concept) return '';
-      const totalScheduled = contract.programa.reduce((sum, m) => sum + ((m.avances || {})[alert.concept_key] || 0), 0);
-      const totalExecuted = trabajos.reduce((sum, t) => sum + ((t.cantidades || {})[alert.concept_key] || 0), 0);
-      const deviation = totalScheduled > 0 ? ((totalScheduled - totalExecuted) / totalScheduled) * 100 : 0;
       const isPaused = alert.estado === 'pausada';
-      const isFired = !isPaused && deviation > alert.limite_desviacion;
+      // HU-07: "la alerta solo dispara cuando el avance real es menor al umbral" - el estado
+      // `disparada`/`ultimo_avance_pct` viene del backend (checkAlertasConcepto), evaluado en
+      // tiempo real tras cada evento que cambia el avance (trabajos por periodo, estimaciones).
+      const isFired = !isPaused && !!alert.disparada;
+      const avanceConocido = typeof alert.ultimo_avance_pct === 'number';
       let statusBadge = `<span class="badge badge-authorized">Vigente (OK)</span>`;
       if (isPaused) statusBadge = `<span class="badge badge-review">Pausada</span>`;
-      if (isFired) statusBadge = `<span class="badge badge-rejected" style="animation: pulse-glow 1.5s infinite;">RETARDO (${deviation.toFixed(0)}% atraso)</span>`;
+      if (isFired) statusBadge = `<span class="badge badge-rejected" style="animation: pulse-glow 1.5s infinite;">ALERTA DISPARADA</span>`;
+      const avanceTexto = avanceConocido ? `${alert.ultimo_avance_pct.toFixed(1)}%` : 'Sin evaluar aun';
 
       const actions = this.state.user.rol === 'residente' ? `
         <button class="btn btn-secondary" style="padding: 4px 8px;" title="${isPaused ? 'Reactivar alerta' : 'Pausar alerta'}" onclick="app.toggleAlertaEstado('${alert.id}', '${isPaused ? 'activa' : 'pausada'}')">
@@ -280,7 +282,7 @@
         </button>
       ` : ' - ';
 
-      return `<tr><td><strong>${alert.concept_key}</strong></td><td>${alert.limite_desviacion}%</td><td>${alert.canal || 'sistema'}</td><td>${statusBadge}</td><td>${deviation.toFixed(1)}%</td><td style="text-align:center;">${actions}</td></tr>`;
+      return `<tr><td><strong>${alert.concept_key}</strong></td><td>${alert.limite_desviacion}%</td><td>${alert.canal || 'sistema'}</td><td>${statusBadge}</td><td>${avanceTexto}</td><td style="text-align:center;">${actions}</td></tr>`;
     },
 
     async registrarTrabajosPeriodoDialog() {

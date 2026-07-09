@@ -7,6 +7,7 @@ const { buildWorkbookBuffer, sendXlsx } = require('../utils/xlsxExport');
 const { buildTablePdfBuffer, sendPdf } = require('../utils/pdfExport');
 const { calcularPlazoLegal } = require('../utils/plazosLegales');
 const { parseJsonField } = require('../utils/validators');
+const { checkAlertasConcepto } = require('../jobs/alertasScheduler');
 
 const router = express.Router();
 
@@ -114,6 +115,9 @@ router.post('/contratos/:id/estimaciones/integrar', authenticate, authorizeRoles
     observaciones: [],
     version_numero: 1
   });
+
+  // HU-07: el avance real del contrato cambio, reevaluar si alguna alerta de concepto debe dispararse
+  checkAlertasConcepto(contrato_id);
 
   return res.status(201).json({ message: "Estimacion integrada en borrador", estimacion: newEst });
 });

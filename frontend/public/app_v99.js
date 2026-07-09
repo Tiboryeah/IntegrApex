@@ -94,6 +94,7 @@ const app = {
     const badge = document.getElementById('header-user-badge');
     badge.innerHTML = `<strong>${this.state.user.nombre}</strong> (${this.state.user.rol})`;
     this.renderSidebar();
+    if (typeof this.initNotifPolling === 'function') this.initNotifPolling();
   },
 
   // SPA Router Navigation
@@ -141,6 +142,10 @@ const app = {
   logout() {
     fetch('/api/auth/logout', { method: 'POST' }).then(() => {
       this.state.user = null;
+      if (this.state.notifPollHandle) {
+        clearInterval(this.state.notifPollHandle);
+        this.state.notifPollHandle = null;
+      }
       document.getElementById('app-header').style.display = 'none';
       document.getElementById('app-sidebar').style.display = 'none';
       this.navigate('login');

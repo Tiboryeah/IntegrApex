@@ -108,11 +108,34 @@ router.post('/bitacora/:id/firmar', authenticate, (req, res) => {
 // HU-09: Emision y respuesta de notas
 router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
   const contrato_id = req.params.id;
-  const { tipo, contenido, vinculo_nota_id, referencia_tipo, referencia_id } = req.body;
+  const { tipo, vinculo_nota_id, referencia_tipo, referencia_id, dice, debe_decir } = req.body;
+  let { contenido } = req.body;
   const user = req.user;
 
-  if (!tipo || !contenido) {
-    return res.status(400).json({ error: "Tipo y contenido requeridos" });
+  if (!tipo) {
+    return res.status(400).json({ error: "Tipo requerido" });
+  }
+
+  // HU-09: una correccion formal de una nota previa se registra con el formato
+  // estructurado "dice / debe decir" en vez de texto libre, sin alterar la nota original.
+  let correccion = null;
+  if (dice || debe_decir) {
+    if (!vinculo_nota_id) {
+      return res.status(400).json({ error: "Una correccion (dice/debe decir) requiere el folio de la nota que se corrige" });
+    }
+    if (!dice || !debe_decir) {
+      return res.status(400).json({ error: "La correccion requiere tanto 'dice' como 'debe decir'" });
+    }
+    const notaOriginal = store.findOne('notas', n => n.contrato_id === contrato_id && n.folio === parseInt(vinculo_nota_id, 10));
+    if (!notaOriginal) {
+      return res.status(400).json({ error: `No existe la nota #${vinculo_nota_id} en este contrato para corregir` });
+    }
+    correccion = { dice, debe_decir, nota_original_folio: notaOriginal.folio };
+    contenido = `Correccion de la Nota #${notaOriginal.folio}. DICE: "${dice}". DEBE DECIR: "${debe_decir}".`;
+  }
+
+  if (!contenido) {
+    return res.status(400).json({ error: "Contenido requerido" });
   }
 
   const bitacora = store.findOne('bitacoras', b => b.contrato_id === contrato_id);
@@ -160,6 +183,7 @@ router.post('/contratos/:id/bitacora/notas', authenticate, (req, res) => {
     fecha: new Date().toISOString(),
     firma_hash: signatureHash,
     vinculo_nota_id: vinculo_nota_id || null,
+    correccion,
     referencia_tipo: referenciaValida ? referenciaValida.referencia_tipo : null,
     referencia_id: referenciaValida ? referenciaValida.referencia_id : null
   });

@@ -2,6 +2,8 @@ const express = require('express');
 
 const store = require('../db/store');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
+const { notificar } = require('../utils/notificar');
+const { checkAlertasConcepto } = require('../jobs/alertasScheduler');
 
 const router = express.Router();
 
@@ -26,15 +28,16 @@ router.post('/contratos/:id/alertas', authenticate, authorizeRoles('residente'),
       estado: existing.estado || 'activa',
       actualizado_en: new Date().toISOString()
     });
-    store.insert('notificaciones', {
+    notificar({
       contrato_id,
       tipo: 'alerta_concepto',
       canal: canal || 'sistema',
       mensaje: `Alerta actualizada para el concepto ${concept_key}`,
-      leida: false,
       creado_para_rol: 'residente',
-      creado_en: new Date().toISOString()
+      relacionado_tipo: 'alerta',
+      relacionado_id: existing.id
     });
+    checkAlertasConcepto(contrato_id);
     return res.json({ message: "Alerta de concepto actualizada con exito", alerta: updated });
   } else {
     const newAlert = store.insert('alertas', {
@@ -43,17 +46,19 @@ router.post('/contratos/:id/alertas', authenticate, authorizeRoles('residente'),
       limite_desviacion: parseFloat(limite_desviacion),
       canal: canal || 'sistema',
       estado: 'activa',
+      disparada: false,
       creado_en: new Date().toISOString()
     });
-    store.insert('notificaciones', {
+    notificar({
       contrato_id,
       tipo: 'alerta_concepto',
       canal: canal || 'sistema',
       mensaje: `Alerta creada para el concepto ${concept_key}`,
-      leida: false,
       creado_para_rol: 'residente',
-      creado_en: new Date().toISOString()
+      relacionado_tipo: 'alerta',
+      relacionado_id: newAlert.id
     });
+    checkAlertasConcepto(contrato_id);
     return res.status(201).json({ message: "Alerta de concepto configurada con exito", alerta: newAlert });
   }
 });

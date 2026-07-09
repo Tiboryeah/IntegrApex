@@ -268,14 +268,15 @@ router.get('/contratos/:id/expediente/search', authenticate, (req, res) => {
       titulo: contract.folio,
       descripcion: contract.objeto,
       fecha: contract.creado_en,
+      archivo: contract.pdf_contrato || null,
       datos: contract
     },
-    ...docs.map(d => ({ bloque: 'documentos', tipo: d.tipo, titulo: d.nombre, descripcion: d.path, fecha: d.creado_en, datos: d })),
-    ...bonds.map(f => ({ bloque: 'fianzas', tipo: f.tipo, titulo: `${f.tipo} - ${f.afianzadora}`, descripcion: `Vigencia ${f.vigencia}`, fecha: f.creado_en, datos: f })),
-    ...convenios.map(c => ({ bloque: 'convenios', tipo: 'convenio', titulo: c.descripcion, descripcion: c.motivo || c.articulo_aplicado, fecha: c.creado_en, datos: c })),
-    ...minutas.map(m => ({ bloque: 'minutas', tipo: 'minuta', titulo: m.descripcion, descripcion: m.fecha_reunion, fecha: m.fecha_reunion, datos: m })),
-    ...visitas.map(v => ({ bloque: 'visitas', tipo: 'visita', titulo: v.descripcion, descripcion: `${v.fecha_visita} ${v.asistentes || ''}`, fecha: v.fecha_visita, datos: v })),
-    ...notes.map(n => ({ bloque: 'bitacora', tipo: n.tipo, titulo: `Nota ${n.folio}`, descripcion: n.contenido, fecha: n.fecha, datos: n }))
+    ...docs.map(d => ({ bloque: 'documentos', tipo: d.tipo, titulo: d.nombre, descripcion: d.path, fecha: d.creado_en, archivo: d.path || null, datos: d })),
+    ...bonds.map(f => ({ bloque: 'fianzas', tipo: f.tipo, titulo: `${f.tipo} - ${f.afianzadora}`, descripcion: `Vigencia ${f.vigencia}`, fecha: f.creado_en, archivo: f.pdf_poliza || null, datos: f })),
+    ...convenios.map(c => ({ bloque: 'convenios', tipo: 'convenio', titulo: c.descripcion, descripcion: c.motivo || c.articulo_aplicado, fecha: c.creado_en, archivo: null, datos: c })),
+    ...minutas.map(m => ({ bloque: 'minutas', tipo: 'minuta', titulo: m.descripcion, descripcion: m.fecha_reunion, fecha: m.fecha_reunion, archivo: m.pdf_path || null, datos: m })),
+    ...visitas.map(v => ({ bloque: 'visitas', tipo: 'visita', titulo: v.descripcion, descripcion: `${v.fecha_visita} ${v.asistentes || ''}`, fecha: v.fecha_visita, archivo: null, datos: v })),
+    ...notes.map(n => ({ bloque: 'bitacora', tipo: n.tipo, titulo: `Nota ${n.folio}`, descripcion: n.contenido, fecha: n.fecha, archivo: null, datos: n }))
   ];
 
   const lower = value => String(value || '').toLowerCase();

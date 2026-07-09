@@ -101,6 +101,7 @@ const initialState = {
   fianza_endosos: [],
   trabajos_periodo: [],
   notificaciones: [],
+  correos_salientes: [],
   observaciones_estimacion: [],
   reportes_generados: [],
   configuracion_alertas: []

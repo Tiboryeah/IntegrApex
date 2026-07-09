@@ -4,6 +4,7 @@ const store = require('../db/store');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { parseJsonField, normalizeMoney } = require('../utils/validators');
+const { checkFianzasVigencia } = require('../jobs/alertasScheduler');
 
 const router = express.Router();
 
@@ -40,11 +41,15 @@ router.post('/contratos/:id/fianzas', authenticate, authorizeRoles('dependencia'
     vigencia,
     monto: parseFloat(monto),
     umbrales_alerta: thresholds.length ? thresholds : [30, 15, 5],
+    alertas_emitidas: [],
     pdf_poliza: req.file ? `/uploads/${req.file.filename}` : null,
     creado_por_id: req.user.id,
     creado_por_nombre: req.user.nombre,
     creado_en: new Date().toISOString()
   });
+
+  // HU-02: si la vigencia ya nace dentro de una ventana de alerta (30/15/5 dias), notificar de inmediato
+  checkFianzasVigencia();
 
   return res.status(201).json({ message: "Garantia registrada con exito", fianza: newBond });
 });
@@ -79,8 +84,12 @@ router.post('/fianzas/:id/endosos', authenticate, authorizeRoles('dependencia'),
   store.update('fianzas', fianza.id, {
     monto: endoso.monto_nuevo,
     vigencia: endoso.nueva_vigencia,
+    // HU-02: nueva vigencia = nueva cuenta regresiva; se reinician los umbrales ya notificados
+    alertas_emitidas: endoso.nueva_vigencia !== fianza.vigencia ? [] : (fianza.alertas_emitidas || []),
     actualizado_en: new Date().toISOString()
   });
+
+  checkFianzasVigencia();
 
   return res.status(201).json({ message: "Endoso registrado con exito", endoso });
 });
