@@ -22,6 +22,10 @@ router.post('/auth/login', (req, res) => {
     return res.status(403).json({ error: "Su cuenta está pendiente de aprobación por la dependencia" });
   }
 
+  if (user.estado === 'rechazado') {
+    return res.status(401).json({ error: "Su solicitud de acceso no fue aprobada" });
+  }
+
   // El rol se toma del registro persistido; no se solicita al usuario en el login.
   const token = jwt.sign(
     { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol },
