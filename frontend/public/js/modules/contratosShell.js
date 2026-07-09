@@ -2,7 +2,8 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.contratosShell = {
-  async renderContractsDashboard() {
+    // DASHBOARD DE CONTRATOS: Muestra la lista de contratos asignados en forma de tarjetas ejecutivas para el usuario.
+    async renderContractsDashboard() {
     this.showLoggedInUI();
     const outlet = document.getElementById('app-router-outlet');
 
@@ -51,7 +52,8 @@
     } catch (e) {}
   },
 
-  async selectContract(contractId) {
+    // SELECCIONAR CONTRATO: Asigna el contrato activo en el estado global, actualiza cabeceras y navega al detalle del expediente.
+    async selectContract(contractId) {
     this.state.currentContractId = contractId;
     try {
       const contract = await this.api(`/api/contratos/${contractId}`);
@@ -65,7 +67,8 @@
     } catch (e) {}
   },
 
-  async renderContractDetail() {
+    // VISTA DE DETALLE: Renderiza el contenedor principal de pestañas para el expediente de un contrato seleccionado.
+    async renderContractDetail() {
     const outlet = document.getElementById('app-router-outlet');
     const id = this.state.currentContractId;
 
@@ -111,12 +114,14 @@
     } catch(e) {}
   },
 
-  switchTab(tabName) {
+    // INTERCAMBIAR PESTAÑA: Cambia el foco de la pestaña activa en el expediente y redibuja su contenido.
+    switchTab(tabName) {
     this.state.activeTab = tabName;
     this.renderActiveTabContent();
   },
 
-  renderActiveTabContent() {
+    // DIBUJAR PESTAÑA ACTIVA: Delega al método correspondiente del módulo del tab actual el renderizado del contenido (Garantías, Convenios, etc.).
+    renderActiveTabContent() {
     const contract = this.state.currentContractData;
     const outlet = document.getElementById('tab-content-outlet');
     if (!outlet) return;

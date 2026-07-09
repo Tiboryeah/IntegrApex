@@ -2,6 +2,7 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.convenios = {
+    // PESTAÑA DE CONVENIOS (HU-03): Renderiza el listado de convenios modificatorios del contrato, mostrando ajustes de monto/plazo, artículos y endosos asociados.
     renderConveniosTab(contract, outlet) {
       let rows = '';
       if (contract.convenios.length === 0) {
@@ -66,6 +67,7 @@
       `;
     },
 
+    // APLICAR CONVENIO MODIFICATORIO (HU-03): Abre el modal para capturar los datos de modificación de montos/plazos y enviarlos al servidor.
     registrarConvenioDialog() {
       this.showModal(`
         <h2>Aplicar Convenio Modificatorio (HU-03)</h2>

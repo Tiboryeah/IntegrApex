@@ -2,6 +2,7 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.documentos = {
+    // PESTAÑA DE MINUTAS Y VISITAS (HU-11): Muestra la bandeja de minutas cargadas y la agenda de visitas del contrato actual.
     renderDocumentosTab(contract, outlet) {
       const filterPeriodo = this.state.documentosFilterPeriodo || '';
       const matchesPeriodo = fecha => {
@@ -101,6 +102,7 @@
       this.renderActiveTabContent();
     },
 
+    // SUBIR MINUTA (HU-11): Abre el formulario modal para cargar y registrar una minuta en formato PDF.
     registrarMinutaDialog() {
       this.showModal(`
         <h2>Subir Minuta de Reunin (HU-11)</h2>
@@ -147,6 +149,7 @@
       });
     },
 
+    // AGENDAR INSPECCIÓN (HU-11): Abre el modal para registrar una nueva visita de inspección con asistentes.
     registrarVisitaDialog() {
       this.showModal(`
         <h2>Agendar Visita / Inspeccion (HU-11)</h2>

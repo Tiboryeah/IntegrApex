@@ -16,6 +16,7 @@
     // ==========================================
     // Portafolio ejecutivo (HU-18).
     // ==========================================
+    // PORTAFOLIO EJECUTIVO (HU-18): Renderiza la pantalla dedicada de portafolio que agrupa los contratos por contratista, ejercicio fiscal o tipo.
     async renderPortafolioEjecutivo() {
       this.showLoggedInUI();
       const outlet = document.getElementById('app-router-outlet');
@@ -71,6 +72,7 @@
       } catch (e) {}
     },
 
+    // TARJETA DE CONTRATO (HU-18): Renderiza el HTML de la minicard de un contrato con barra de avance, semáforo y badges.
     renderTarjetaPortafolio(c) {
       const tendenciaTexto = c.tendencia === 'subida' ? 'Mejorando vs. mes anterior' : c.tendencia === 'bajada' ? 'Bajando vs. mes anterior' : 'Sin cambio vs. mes anterior';
       return `
@@ -107,6 +109,7 @@
 
     // El doble clic nativo dispara también eventos click independientes.
     // Se usa una espera corta para distinguir apertura simple de detalle ejecutivo.
+    // GESTIÓN DE CLICS EN TARJETA: Distingue un clic simple (abre expediente) de un doble clic rápido (abre detalle consolidado modal).
     handleClickTarjetaPortafolio(contratoId) {
       const now = Date.now();
       const pendiente = this.state.portafolioClickPendiente;
@@ -127,6 +130,7 @@
       }, 400);
     },
 
+    // DETALLE CONSOLIDADO (HU-18): Abre un modal mostrando el resumen físico, programado, financiero, atrasos y penalizaciones del contrato.
     async verDetalleConsolidadoPortafolio(contratoId) {
       const item = (this.state.portafolioCache || []).find(p => p.id === contratoId);
       if (!item) return;

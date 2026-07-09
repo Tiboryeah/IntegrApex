@@ -2,6 +2,7 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.expediente = {
+    // EXPEDIENTE DEL CONTRATO (HU-04): Renderiza la pestaña principal de configuración, mostrando datos generales, garantías, amortización, penalizaciones y el buscador documental.
     renderConfigTab(contract, outlet) {
       fetch(`/api/contratos/${contract.id}/bitacora/notas`).then(res => res.json()).then(notes => {
         const opened = notes.length > 0;
@@ -243,6 +244,7 @@
       });
     },
 
+    // CATÁLOGO DE CONCEPTOS (HU-01): Renderiza la pestaña con el desglose del catálogo original del contrato (clave, descripción, unidad, cantidad y precio).
     renderCatalogoTab(contract, outlet) {
       let rows = '';
       contract.catalogo.forEach(item => {
@@ -283,6 +285,7 @@
       `;
     },
 
+    // BUSCADOR GLOBAL DEL EXPEDIENTE (HU-04): Consulta al servidor y despliega los resultados combinados de búsqueda AND (contrato, bitácora, convenios, etc.) con sus enlaces de descarga.
     async searchExpediente() {
       const params = new URLSearchParams();
       const fields = [
@@ -334,6 +337,7 @@
       } catch (e) {}
     },
 
+    // LIMPIAR BÚSQUEDA: Resetea el formulario del buscador global y oculta el panel de resultados.
     clearExpedienteSearch() {
       const form = document.getElementById('expediente-search-form');
       if (form) form.reset();
@@ -341,6 +345,7 @@
       if (outlet) outlet.style.display = 'none';
     },
 
+    // FILTRO DE PERIODO DE REPORTES (HU-19): Muestra u oculta selectores según el tipo de periodo (acumulado, mensual, trimestral).
     togglePeriodoReporteInput() {
       const tipo = document.getElementById('export-report-periodo-tipo').value;
       const wrapper = document.getElementById('export-report-periodo-valor-wrapper');
@@ -356,6 +361,7 @@
       trimestral.style.display = tipo === 'trimestral' ? 'flex' : 'none';
     },
 
+    // DESCARGAR REPORTE (HU-19): Construye los parámetros de exportación y gatilla la descarga de los reportes en XLSX o PDF.
     descargarReporte() {
       const reportType = document.getElementById('export-report-select').value;
       const formato = document.getElementById('export-report-formato').value;

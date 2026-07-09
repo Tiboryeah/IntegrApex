@@ -5,6 +5,7 @@
     // ==========================================
     // Pantalla de alta de contratos (HU-01).
     // ==========================================
+    // ALTA DE CONTRATO (HU-01): Renderiza el formulario de registro de un contrato de obra pública en sus diferentes bloques.
     async renderAltaContrato() {
       const outlet = document.getElementById('app-router-outlet');
 
@@ -231,6 +232,7 @@
       } catch (e) {}
     },
 
+    // CALCULAR VALORES DERIVADOS: Recalcula automáticamente montos de garantías sugeridas y el plan de amortización mensual.
     refreshAltaDerivedValues() {
       const monto = parseFloat(document.getElementById('c-monto')?.value || 0);
       const anticipo = parseFloat(document.getElementById('c-anticipo')?.value || 30);
@@ -262,6 +264,7 @@
       this.renderProgramaCaptura();
     },
 
+    // OBTENER CONCEPTOS ACTUALES: Obtiene las filas del catálogo del formulario como objetos del frontend.
     getCatalogoDraft() {
       const catalogo = [];
       document.querySelectorAll('#catalogo-table tbody tr').forEach(r => {
@@ -275,6 +278,7 @@
       return catalogo;
     },
 
+    // DIBUJAR CAPTURA DEL PROGRAMA: Renderiza la tabla Gantt para ingresar la cantidad mensual programada por concepto.
     renderProgramaCaptura() {
       const wrapper = document.getElementById('programa-captura-wrapper');
       if (!wrapper) return;
@@ -317,6 +321,7 @@
       `;
     },
 
+    // RECOPILAR DATOS DEL PROGRAMA: Lee la tabla del cronograma y estructura el plan de avances mensuales para el servidor.
     collectProgramaCaptura(catalogo, months) {
       const programa = Array.from({ length: months }, (_, idx) => ({ mes: idx + 1, avances: {} }));
       const inputs = document.querySelectorAll('#programa-table .prog-input');
@@ -339,6 +344,7 @@
       return programa;
     },
 
+    // AGREGAR FILA DE CONCEPTO: Inserta una fila vacía en la tabla del catálogo de conceptos.
     addConceptRow() {
       const tbody = document.querySelector('#catalogo-table tbody');
       const row = document.createElement('tr');
@@ -354,6 +360,7 @@
       this.renderProgramaCaptura();
     },
 
+    // RECALCULAR IMPORTES: Multiplica cantidad por precio unitario por fila en la tabla del catálogo.
     recalcCatImportes() {
       const rows = document.querySelectorAll('#catalogo-table tbody tr');
       rows.forEach(r => {
@@ -365,6 +372,7 @@
       this.renderProgramaCaptura();
     },
 
+    // GUARDAR CONTRATO: Envía todo el FormData (incluyendo archivo PDF, catálogo, programa y garantías) al backend.
     async submitAltaContrato() {
       const formData = new FormData();
       formData.append('folio', document.getElementById('c-folio').value);

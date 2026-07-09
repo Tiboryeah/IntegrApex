@@ -2,7 +2,8 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.coreApi = {
-  async api(url, options = {}, silent = false) {
+    // FUNCIÓN DE CLIENTE API: Realiza peticiones HTTP genéricas al backend usando fetch, resolviendo respuestas JSON y mostrando notificaciones Toast de error automáticamente.
+    async api(url, options = {}, silent = false) {
     try {
       const res = await fetch(url, options);
       const data = await res.json();

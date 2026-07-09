@@ -2,7 +2,8 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.coreRouter = {
-  async init() {
+    // INICIALIZACIÓN DEL ENRUTADOR: Vincula el botón del menú lateral, verifica la sesión actual e inicia la navegación en base al path del navegador.
+    async init() {
     // Configura el botón que contrae o expande el menú lateral.
     const sidebarToggle = document.getElementById('sidebar-toggle');
     if (sidebarToggle) {
@@ -40,7 +41,8 @@
     });
   },
 
-  async navigate(screen, params = {}, options = {}) {
+    // NAVEGAR A PANTALLA: Cambia de pantalla activa en la SPA, actualiza la URL y renderiza el módulo correspondiente en el outlet.
+    async navigate(screen, params = {}, options = {}) {
     if (!this.state.user && !['login', 'register'].includes(screen)) {
       screen = 'login';
       params = {};
@@ -90,7 +92,8 @@
     }
   },
 
-  getRouteFromLocation() {
+    // PARSEAR URL ACTUAL: Analiza la URL del navegador y retorna el par { screen, params } correspondiente para cargar la pantalla correcta.
+    getRouteFromLocation() {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
     const routes = {
       '/': { screen: 'login', params: {} },
@@ -111,7 +114,8 @@
     return { screen: this.state.user ? 'inicio' : 'login', params: {} };
   },
 
-  buildPathForRoute(screen, params = {}) {
+    // CONSTRUIR PATH DE RUTA: Retorna la URL relativa en base a la pantalla y los parámetros provistos.
+    buildPathForRoute(screen, params = {}) {
     const paths = {
       login: '/login',
       register: '/registro',
@@ -130,7 +134,8 @@
     return paths[screen] || '/inicio';
   },
 
-  syncBrowserUrl(screen, params = {}, options = {}) {
+    // SINCRONIZAR URL DEL NAVEGADOR: Empuja o reemplaza el historial del navegador con la nueva ruta sin recargar la página.
+    syncBrowserUrl(screen, params = {}, options = {}) {
     const path = this.buildPathForRoute(screen, params);
     if (window.location.pathname === path && !window.location.hash) return;
 
@@ -142,7 +147,8 @@
     }
   },
 
-  logout() {
+    // CERRAR SESIÓN: Envía la petición de logout al servidor, limpia las variables de estado e interrumpe el polling de notificaciones.
+    logout() {
     fetch('/api/auth/logout', { method: 'POST' }).then(() => {
       this.state.user = null;
       if (this.state.notifPollHandle) {

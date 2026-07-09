@@ -10,6 +10,7 @@
   };
 
   window.IntegrApexModules.notificaciones = {
+    // INICIALIZACIÓN DE POLLING: Activa la consulta recurrente de notificaciones al servidor cada 30 segundos y el cierre de dropdown al hacer clic fuera.
     initNotifPolling() {
       if (this.state.notifPollHandle) return;
       this.loadNotificaciones();
@@ -27,6 +28,7 @@
       }
     },
 
+    // CONSULTAR NOTIFICACIONES: Llama al servidor de forma silenciosa para obtener las notificaciones vigentes de la sesión.
     async loadNotificaciones() {
       try {
         const data = await this.api('/api/notificaciones', {}, true);
@@ -39,6 +41,7 @@
       } catch (e) {}
     },
 
+    // RENDERIZAR BADGE CONTADOR: Actualiza el globo rojo indicador de notificaciones no leídas en la campana del topbar.
     renderNotifBadge(count) {
       const badge = document.getElementById('notif-unread-badge');
       if (!badge) return;
@@ -50,6 +53,7 @@
       }
     },
 
+    // DESPLEGAR DROPDOWN: Muestra u oculta la bandeja descolgable al hacer clic en la campana.
     toggleNotifDropdown() {
       const dropdown = document.getElementById('notif-dropdown');
       if (!dropdown) return;
@@ -58,6 +62,7 @@
       if (opening) this.renderNotifDropdown();
     },
 
+    // RENDERIZAR DROPDOWN: Dibuja la lista de notificaciones recientes en el dropdown y los botones de acción correspondientes.
     renderNotifDropdown() {
       const dropdown = document.getElementById('notif-dropdown');
       if (!dropdown) return;
@@ -89,6 +94,7 @@
       `;
     },
 
+    // MARCAR COMO LEÍDA: Informa al servidor que el usuario leyó una notificación en específico y actualiza el listado.
     async marcarNotifLeida(id) {
       try {
         await this.api(`/api/notificaciones/${id}/leer`, { method: 'PATCH' }, true);
@@ -96,6 +102,7 @@
       } catch (e) {}
     },
 
+    // MARCAR TODAS COMO LEÍDAS: Llama al backend para marcar todo el listado de notificaciones pendientes de leer como leídas.
     async marcarTodasNotifLeidas() {
       try {
         await this.api('/api/notificaciones/leer-todas', { method: 'POST' }, true);

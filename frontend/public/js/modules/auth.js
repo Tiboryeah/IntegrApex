@@ -2,6 +2,7 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.auth = {
+    // PANTALLA DE LOGIN: Renderiza la interfaz de inicio de sesión seguro y gestiona la llamada de autenticación al servidor.
     renderLogin() {
       document.getElementById('app-header').style.display = 'none';
       document.getElementById('app-sidebar').style.display = 'none';
@@ -88,6 +89,7 @@
       });
     },
 
+    // PANTALLA DE REGISTRO (HU-00): Renderiza la interfaz para solicitar acceso al sistema, especificando el rol solicitado.
     renderRegister() {
       document.getElementById('app-header').style.display = 'none';
       document.getElementById('app-sidebar').style.display = 'none';

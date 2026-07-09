@@ -4,6 +4,7 @@
   const money = value => `$${Number(value || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
 
   window.IntegrApexModules.programa = {
+    // PESTAÑA DE SEGUIMIENTO (HU-05): Renderiza la vista de avances físicos y financieros, incluyendo la Curva S interactiva.
     renderProgramaTab(contract, outlet) {
       const filterConcept = this.state.programaFilterConcept || '';
       const filterPeriod = parseInt(this.state.programaFilterPeriod || 0, 10);
@@ -68,6 +69,7 @@
       }).catch(() => {});
     },
 
+    // DIBUJAR GRÁFICOS Y TABLAS (HU-05): Calcula los avances acumulados e imprime la curva S SVG, barras y Gantt.
     renderProgramaCharts(contract, ests, trabajos, filters) {
       const filterConcept = filters.filterConcept;
       const filterPeriod = filters.filterPeriod;
@@ -212,6 +214,7 @@
       `;
     },
 
+    // SECCIÓN TRABAJOS PERIODO (HU-06): Dibuja el panel y tabla con el registro histórico de trabajos terminados.
     renderTrabajosPeriodo(contract, trabajosRegistrados, subtotalByQty) {
       const registerBtn = this.state.user.rol === 'contratista' ? `<button class="btn btn-primary btn-sm" onclick="app.registrarTrabajosPeriodoDialog()">Registrar trabajos</button>` : '';
       const rows = trabajosRegistrados.length === 0
@@ -231,12 +234,14 @@
       `;
     },
 
+    // APLICAR FILTROS: Actualiza las variables de estado y redibuja la pestaña con el concepto o periodo seleccionado.
     applyProgramaFilters(kind, value) {
       if (kind === 'concept') this.state.programaFilterConcept = value;
       if (kind === 'period') this.state.programaFilterPeriod = value;
       this.renderActiveTabContent(this.state.currentContractData);
     },
 
+    // PANEL DE ALERTAS (HU-07): Consulta las alertas por concepto y renderiza el panel lateral de vigilancia.
     renderConceptAlertsPanel(contract, trabajos) {
       fetch(`/api/contratos/${contract.id}/alertas`).then(res => res.json()).then(alerts => {
         const rows = alerts.length === 0
@@ -259,6 +264,7 @@
       }).catch(() => {});
     },
 
+    // FILA DE ALERTA: Renderiza una fila en la tabla de alertas mostrando badges e indicando si está activa o disparada.
     renderConceptAlertRow(contract, trabajos, alert) {
       const concept = contract.catalogo.find(c => c.clave === alert.concept_key);
       if (!concept) return '';
@@ -285,6 +291,7 @@
       return `<tr><td><strong>${alert.concept_key}</strong></td><td>${alert.limite_desviacion}%</td><td>${alert.canal || 'sistema'}</td><td>${statusBadge}</td><td>${avanceTexto}</td><td style="text-align:center;">${actions}</td></tr>`;
     },
 
+    // REGISTRAR TRABAJOS (HU-06): Abre el modal para capturar las cantidades ejecutadas y vincularlas a una nota de bitácora.
     async registrarTrabajosPeriodoDialog() {
       const contract = this.state.currentContractData;
       let notes = [];
@@ -347,6 +354,7 @@
       });
     },
 
+    // CONFIGURAR ALERTA (HU-07): Modal para definir un límite de desviación para un concepto específico y canal de aviso.
     configurarAlertaDialog() {
       const contract = this.state.currentContractData;
       const conceptOpts = contract.catalogo.map(c => `<option value="${c.clave}">${c.clave} - ${c.descripcion}</option>`).join('');
@@ -383,6 +391,7 @@
       });
     },
 
+    // ELIMINAR ALERTA (HU-07): Borra una alerta de concepto específica.
     async eliminarAlertaConcep(alertaId) {
       if (!confirm('Estas seguro de eliminar esta alerta de concepto?')) return;
       try {
@@ -392,6 +401,7 @@
       } catch (e) {}
     },
 
+    // PAUSAR/REACTIVAR ALERTA (HU-07): Cambia el estado de una alerta entre activa o pausada.
     async toggleAlertaEstado(alertaId, estado) {
       try {
         await this.api(`/api/alertas/${alertaId}`, {

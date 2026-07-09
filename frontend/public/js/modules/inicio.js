@@ -2,7 +2,8 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.inicio = {
-  async renderInicioDashboard() {
+    // PANTALLA DE INICIO: Renderiza el menú principal ("Tus flujos") con accesos adaptados según el rol del usuario.
+    async renderInicioDashboard() {
     this.showLoggedInUI();
     const outlet = document.getElementById('app-router-outlet');
     const rol = this.state.user.rol;
@@ -69,7 +70,8 @@
     `;
   },
 
-  clickFlowCard(flowId, isActive) {
+    // NAVEGACIÓN DE FLUJOS: Dirige al usuario al módulo o pantalla correspondiente según la tarjeta del flujo seleccionada.
+    clickFlowCard(flowId, isActive) {
     if (!isActive) {
       this.showToast('Acceso en modo de solo lectura', 'info');
     }

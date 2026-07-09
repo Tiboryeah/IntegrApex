@@ -2,7 +2,8 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.admin = {
-  async renderAdminApprovals() {
+    // BANDEJA DE APROBACIONES: Renderiza las solicitudes de registro de usuario pendientes de aprobación (solo para rol de dependencia).
+    async renderAdminApprovals() {
     this.showLoggedInUI();
     const outlet = document.getElementById('app-router-outlet');
 
@@ -70,7 +71,8 @@
     } catch (e) {}
   },
 
-  async resolveUserApproval(userId, approve) {
+    // RESOLVER APROBACIÓN: Envía al servidor la aprobación o rechazo de un usuario especificando su rol definitivo.
+    async resolveUserApproval(userId, approve) {
     const roleOverride = document.getElementById(`role-override-${userId}`).value;
     try {
       await this.api('/api/admin/approve', {

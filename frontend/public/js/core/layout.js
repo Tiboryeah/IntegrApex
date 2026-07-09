@@ -2,7 +2,8 @@
   window.IntegrApexModules = window.IntegrApexModules || {};
 
   window.IntegrApexModules.coreLayout = {
-  showLoggedInUI() {
+    // MOSTRAR INTERFAZ AUTENTICADA: Hace visibles el header y sidebar de la aplicación, despliega el badge del usuario actual y activa las notificaciones.
+    showLoggedInUI() {
     document.getElementById('app-header').style.display = 'flex';
     document.getElementById('app-sidebar').style.display = 'flex';
     const badge = document.getElementById('header-user-badge');
@@ -11,7 +12,8 @@
     if (typeof this.initNotifPolling === 'function') this.initNotifPolling();
   },
 
-  renderSidebar() {
+    // DIBUJAR MENÚ LATERAL: Genera dinámicamente los enlaces del sidebar en función del rol y permisos del usuario activo.
+    renderSidebar() {
     const sidebar = document.getElementById('app-sidebar');
     const rol = this.state.user.rol;
 
@@ -171,7 +173,8 @@
     sidebar.innerHTML = html;
   },
 
-  openContractModule(tabName) {
+    // ABRIR MÓDULO DEL CONTRATO: Redirige al expediente y activa la pestaña correspondiente si hay un contrato previamente seleccionado.
+    openContractModule(tabName) {
     if (this.state.currentContractId) {
       this.state.activeTab = tabName;
       this.navigate('contract-detail', { id: this.state.currentContractId });
@@ -181,7 +184,8 @@
     }
   },
 
-  async openEstimacionesModule() {
+    // ABRIR MÓDULO DE ESTIMACIONES: Navega al detalle del contrato actual y dibuja la sección del historial de estimaciones.
+    async openEstimacionesModule() {
     if (this.state.currentContractId) {
       await this.navigate('contract-detail', { id: this.state.currentContractId });
       this.renderEstimacionesScreen();
@@ -191,7 +195,8 @@
     }
   },
 
-  openContractsPortafolio() {
+    // ABRIR PORTAFOLIO: Navega a la vista unificada del portafolio ejecutivo de contratos.
+    openContractsPortafolio() {
     this.navigate('portafolio-ejecutivo');
   },
   };
