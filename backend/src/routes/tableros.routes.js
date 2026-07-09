@@ -2,6 +2,7 @@ const express = require('express');
 
 const store = require('../db/store');
 const { authenticate, authorizeRoles } = require('../middleware/auth');
+const { calcularPlazoLegal } = require('../utils/plazosLegales');
 
 const router = express.Router();
 
@@ -78,40 +79,123 @@ router.get('/tableros/estimaciones-activas', authenticate, (req, res) => {
 });
 
 // HU-18: Vista ejecutiva del portafolio con semaforos
+//
+// avance_programado ya no es un 60% fijo: se calcula acumulando, mes a mes,
+// la parte del programa de obra (contract.programa) cuya fecha ya se cumplio,
+// igual que la curva "programado" de HU-05 pero evaluada a la fecha de hoy.
+function calcularAvanceProgramado(contract) {
+  const inicio = new Date(contract.fecha_inicio);
+  const hoy = new Date();
+  if (hoy <= inicio) return 0;
+
+  const scopeAmount = contract.catalogo.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0) || contract.monto;
+  const mesesTranscurridos = Math.floor((hoy - inicio) / (30 * 24 * 60 * 60 * 1000)) + 1;
+
+  let acumulado = 0;
+  (contract.programa || []).forEach(mes => {
+    if (mes.mes > mesesTranscurridos) return;
+    Object.entries(mes.avances || {}).forEach(([clave, qty]) => {
+      const concept = contract.catalogo.find(item => item.clave === clave);
+      if (concept) acumulado += qty * concept.precio_unitario;
+    });
+  });
+
+  return Math.min(100, (acumulado / scopeAmount) * 100);
+}
+
+// avance fisico real = subtotal de estimaciones pagadas hasta una fecha de corte,
+// sobre el monto contractual. Se usa con "hoy" y con "fin del mes anterior" para
+// poder comparar el periodo actual contra el anterior.
+function calcularAvanceFisicoAFecha(contratoId, estimaciones, montoContrato, fechaCorte) {
+  const pagadas = estimaciones.filter(e =>
+    e.contrato_id === contratoId &&
+    e.estado === 'pagada' &&
+    e.fecha_pago_efectuado &&
+    new Date(e.fecha_pago_efectuado) <= fechaCorte
+  );
+  const total = pagadas.reduce((sum, e) => sum + e.subtotal, 0);
+  return montoContrato > 0 ? (total / montoContrato) * 100 : 0;
+}
+
 router.get('/tableros/portafolio', authenticate, authorizeRoles('dependencia'), (req, res) => {
   const contracts = store.getCollection('contratos');
   const allEstimations = store.getCollection('estimaciones');
-  const allNotes = store.getCollection('notas');
+  const allFianzas = store.getCollection('fianzas');
+  const allBitacoras = store.getCollection('bitacoras');
+  const usuarios = store.getCollection('usuarios');
+
+  const now = new Date();
+  const inicioMesActual = new Date(now.getFullYear(), now.getMonth(), 1);
+  const finMesAnterior = new Date(inicioMesActual.getTime() - 1);
 
   const portafolio = contracts.map(c => {
-    const estimations = allEstimations.filter(e => e.contrato_id === c.id && e.estado === 'pagada');
-    const totalSubtotalPagado = estimations.reduce((sum, e) => sum + e.subtotal, 0);
+    const estimacionesContrato = allEstimations.filter(e => e.contrato_id === c.id);
+    const fianzasContrato = allFianzas.filter(f => f.contrato_id === c.id);
+    const bitacoraContrato = allBitacoras.find(b => b.contrato_id === c.id);
 
-    const percentFisico = (totalSubtotalPagado / c.monto) * 100;
-    const percentProgramado = 60.0;
+    const avanceFisico = calcularAvanceFisicoAFecha(c.id, allEstimations, c.monto, now);
+    const avanceFisicoMesAnterior = calcularAvanceFisicoAFecha(c.id, allEstimations, c.monto, finMesAnterior);
+    const avanceProgramado = calcularAvanceProgramado(c);
 
-    let color = "verde";
-    const diff = percentProgramado - percentFisico;
-    if (diff > 15) {
-      color = "rojo";
-    } else if (diff > 5) {
-      color = "ambar";
+    // Factor 2: atrasos en plazos legales (revision de 15 dias, pago de 20 dias, fianzas vencidas)
+    const estimacionesVencidas = estimacionesContrato.filter(e => {
+      const plazoRevision = ['presentada', 'en_revision'].includes(e.estado) && e.fecha_presentacion
+        ? calcularPlazoLegal(e.fecha_presentacion, 15) : null;
+      const plazoPago = ['autorizada', 'en_pago'].includes(e.estado) && e.fecha_autorizacion_residencia
+        ? calcularPlazoLegal(e.fecha_autorizacion_residencia, 20) : null;
+      return (plazoRevision && plazoRevision.vencido) || (plazoPago && plazoPago.vencido);
+    }).length;
+    const fianzasVencidas = fianzasContrato.filter(f => f.vigencia && new Date(f.vigencia) < now).length;
+    const atrasosLegales = estimacionesVencidas + fianzasVencidas;
+
+    // Factor 3: pendientes sin atender reales (no "todas las notas" como antes)
+    const estimacionesEnProceso = estimacionesContrato.filter(e => ['presentada', 'en_revision'].includes(e.estado)).length;
+    const bitacoraSinFirmar = bitacoraContrato && !bitacoraContrato.completada ? 1 : 0;
+    const pendientes = estimacionesEnProceso + bitacoraSinFirmar;
+
+    let semaforo = 'verde';
+    const brecha = avanceProgramado - avanceFisico;
+    if (brecha > 15 || atrasosLegales > 0) {
+      semaforo = 'rojo';
+    } else if (brecha > 5 || pendientes >= 2) {
+      semaforo = 'ambar';
     }
 
-    const pendingNotes = allNotes.filter(n => n.contrato_id === c.id).length;
+    const tendencia = avanceFisico > avanceFisicoMesAnterior ? 'subida' : avanceFisico < avanceFisicoMesAnterior ? 'bajada' : 'igual';
+    const superintendente = usuarios.find(u => u.id === c.superintendente_id);
 
     return {
       id: c.id,
       folio: c.folio,
       objeto: c.objeto,
       monto: c.monto,
-      avance_fisico: percentFisico,
-      avance_programado: percentProgramado,
-      avance_financiero: percentFisico,
-      semaforo: color,
-      pendientes: pendingNotes
+      contratista: superintendente ? superintendente.nombre : 'N/A',
+      ejercicio_fiscal: new Date(c.fecha_inicio).getFullYear(),
+      tipo_contratacion: c.modalidad_pago || 'N/A',
+      avance_fisico: avanceFisico,
+      avance_programado: avanceProgramado,
+      avance_financiero: avanceFisico,
+      avance_fisico_mes_anterior: avanceFisicoMesAnterior,
+      tendencia,
+      atrasos_legales: atrasosLegales,
+      pendientes,
+      semaforo
     };
   });
+
+  const { agrupar_por } = req.query;
+  if (['contratista', 'ejercicio_fiscal', 'tipo_contratacion'].includes(agrupar_por)) {
+    const grupos = new Map();
+    portafolio.forEach(p => {
+      const clave = String(p[agrupar_por]);
+      if (!grupos.has(clave)) grupos.set(clave, []);
+      grupos.get(clave).push(p);
+    });
+    return res.json({
+      agrupado_por: agrupar_por,
+      grupos: [...grupos.entries()].map(([clave, contratosGrupo]) => ({ clave, contratos: contratosGrupo }))
+    });
+  }
 
   return res.json(portafolio);
 });

@@ -133,6 +133,8 @@ const app = {
       await this.renderPorFirmarBandeja();
     } else if (screen === 'tablero-estimaciones') {
       await this.renderTableroEstimaciones();
+    } else if (screen === 'portafolio-ejecutivo') {
+      await this.renderPortafolioEjecutivo();
     }
   },
 
@@ -332,7 +334,7 @@ const app = {
   },
 
   openContractsPortafolio() {
-    this.navigate('contracts-dashboard');
+    this.navigate('portafolio-ejecutivo');
   },
 
   // ==========================================
@@ -657,37 +659,7 @@ const app = {
           No tienes contratos asociados asignados
         </div>`;
       } else {
-        let portafolioData = [];
-        if (this.state.user.rol === 'dependencia') {
-          portafolioData = await this.api('/api/tableros/portafolio');
-        }
-
         contracts.forEach(c => {
-          let semaforoHtml = '';
-          let progressHtml = '';
-
-          if (this.state.user.rol === 'dependencia') {
-            const extra = portafolioData.find(pd => pd.id === c.id);
-            if (extra) {
-              semaforoHtml = `
-                <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
-                  <span class="semaforo-dot ${extra.semaforo}"></span>
-                  <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Estatus Salud: ${extra.semaforo}</span>
-                </div>
-              `;
-              progressHtml = `
-                <div style="margin-top: 16px;">
-                  <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
-                    <span>Avance Fisico</span>
-                    <span>${extra.avance_fisico.toFixed(1)}%</span>
-                  <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow:hidden;">
-                    <div style="width: ${extra.avance_fisico}%; height: 100%; background: var(--ipn-maroon);"></div>
-                  </div>
-                </div>
-              `;
-            }
-          }
-
           gridHtml += `
             <div class="col-4 mini-card" style="display:flex; flex-direction:column; justify-content:space-between;" onclick="app.selectContract('${c.id}')">
               <div>
@@ -698,10 +670,8 @@ const app = {
                 <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
                   Monto: <strong>$${c.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</strong>
                 </div>
-                ${semaforoHtml}
               </div>
               <div style="margin-top:20px;">
-                ${progressHtml}
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top:16px;">
                   <span>Inicio: ${c.fecha_inicio}</span>
                   <span>Termino: ${c.fecha_termino}</span>
