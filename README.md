@@ -38,25 +38,31 @@ IntegrApex2026!
 
 ## Documentacion De Cumplimiento
 
-La trazabilidad frente a `Historias_Usuario.xlsx` esta en [MATRIZ_CUMPLIMIENTO_HU.md](MATRIZ_CUMPLIMIENTO_HU.md).
+La trazabilidad frente a `Historias_Usuario.xlsx` esta en [MATRIZ_CUMPLIMIENTO_HU.md](MATRIZ_CUMPLIMIENTO_HU.md). Para contexto de alto nivel (que se hizo, en que orden y que faltaria si se retoma el proyecto), ver [CONTEXTO_AGENTE.md](CONTEXTO_AGENTE.md).
 
-## Estado Actual Del Bloque Implementado
+## Estado Actual
 
-- HU-05: programa de obra con curva S, Gantt, filtros por concepto/periodo y avance programado, fisico y financiero.
-- HU-06: registro funcional de trabajos terminados por periodo, ligado obligatoriamente a nota de bitacora y validado contra catalogo.
-- HU-07: alertas por concepto con canal, estado activo/pausado, calculo de atraso, notificacion interna y acciones de pausa/reactivacion.
+Las 24 Historias de Usuario de `Historias_Usuario.xlsx` estan en estado **Cumple** (detalle criterio por criterio en la matriz de cumplimiento). Incluye notificaciones reales (campana en el topbar), alertas de vencimiento de fianzas y de atraso por concepto disparadas por eventos reales de backend, exportaciones reales en Excel/PDF, semaforos de plazos legales, y un ciclo completo de estimaciones (integracion con fotos/soportes, revision seccionada, autorizacion, transito a pago).
 
 ## Estructura
 
 ```text
 backend/
-  server.js               # composicion de Express: middlewares, routers, catch-all
+  server.js               # composicion de Express: middlewares, routers, catch-all, arranca el scheduler de alertas
   src/db/store.js
   src/middleware/
     auth.js
     upload.js              # config de multer
     errorHandler.js        # middleware final de errores -> JSON
-  src/utils/validators.js  # helpers de validacion compartidos
+  src/utils/
+    validators.js          # parseJsonField, normalizeMoney, buildAmortizacionPlan, validatePrograma
+    xlsxExport.js / pdfExport.js  # builders genericos de exportacion (HU-10/16/19)
+    plazosLegales.js       # semaforo verde/ambar/rojo (HU-13/15/18/20)
+    reportData.js          # los 7 reportes de HU-19
+    avanceConceptos.js     # avance real por concepto (HU-06/HU-07)
+    notificar.js           # entrega de notificacion por canal (sistema/correo)
+  src/jobs/
+    alertasScheduler.js    # HU-02 vigencia de fianzas + HU-07 disparo de alertas de atraso
   src/routes/
     index.js                # agrega todos los routers de dominio
     auth.routes.js
@@ -68,23 +74,29 @@ backend/
     trabajosPeriodo.routes.js
     estimaciones.routes.js
     tableros.routes.js
+    reportes.routes.js
     pagos.routes.js
     alertas.routes.js
+    notificaciones.routes.js
 frontend/public/
   index.html
   style.css
   app_v99.js               # core: estado, api(), router SPA, sidebar, dashboards, shell de contrato, modal/toast
   js/modules/
     contratos.js            # HU-01 alta de contrato
-    expediente.js           # HU-04 pestanas config/catalogo, buscador, exportacion CSV
+    expediente.js           # HU-04 pestanas config/catalogo, buscador con descarga por fila, exportacion de reportes
     fianzas.js               # HU-02
     convenios.js             # HU-03
     documentos.js            # HU-11 minutas/visitas
-    bitacora.js               # HU-08, HU-09, HU-10, bandeja Por Firmar
-    estimaciones.js           # HU-12 a HU-21
+    bitacora.js               # HU-08, HU-09 (incl. correccion Dice/Debe decir), HU-10, bandeja Por Firmar
+    estimaciones.js           # HU-12 a HU-17, HU-20, HU-21
+    portafolio.js             # HU-18 Portafolio Ejecutivo
     programa.js                # HU-05, HU-06, HU-07: curva S, Gantt, trabajos por periodo, alertas
-backend/data/db.json
+    notificaciones.js          # campana de notificaciones del topbar
+backend/data/db.json          # runtime, gitignored
 Historias_Usuario.xlsx
+MATRIZ_CUMPLIMIENTO_HU.md     # trazabilidad HU por HU
+CONTEXTO_AGENTE.md            # contexto de alto nivel para retomar el proyecto
 ```
 
 ## Convencion De Frontend
