@@ -18,7 +18,8 @@ function userCanAccessContract(user, contract) {
   return contract.residente_id === user.id ||
     contract.superintendente_id === user.id ||
     contract.supervision_id === user.id ||
-    contract.creado_por_id === user.id;
+    contract.creado_por_id === user.id ||
+    (Array.isArray(contract.equipo) && contract.equipo.some(m => m.usuario_id === user.id));
 }
 
 // Alta de contratos (HU-01)
@@ -30,6 +31,7 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fiel
   let {
     folio,
     objeto,
+    ubicacion_obra,
     monto,
     anticipo_porcentaje,
     plazo_dias,
@@ -38,6 +40,7 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fiel
     residente_id,
     superintendente_id,
     supervision_id,
+    equipo,
     catalogo,
     programa,
     juridicos,
@@ -46,7 +49,7 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fiel
     penalizaciones
   } = req.body;
 
-  if (!folio || !objeto || !monto || !plazo_dias || !fecha_inicio || !residente_id || !superintendente_id) {
+  if (!folio || !objeto || !ubicacion_obra || !monto || !plazo_dias || !fecha_inicio || !residente_id || !superintendente_id) {
     return res.status(400).json({ error: "Faltan campos obligatorios" });
   }
 
@@ -62,9 +65,16 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fiel
     garantias = parseJsonField(garantias, [], 'Garantías');
     amortizacion_plan = parseJsonField(amortizacion_plan, [], 'Plan de amortizacion');
     penalizaciones = parseJsonField(penalizaciones, [], 'Penalizaciones');
+    equipo = parseJsonField(equipo, [], 'Equipo de contrato');
   } catch (e) {
     return res.status(e.statusCode || 400).json({ error: e.message });
   }
+
+  const rolesEquipoValidos = ['residente', 'contratista', 'supervision', 'dependencia', 'finanzas'];
+  const equipoUsuarios = store.getCollection('usuarios');
+  const equipoNormalizado = (Array.isArray(equipo) ? equipo : [])
+    .filter(m => m && m.usuario_id && rolesEquipoValidos.includes(m.rol) && equipoUsuarios.some(u => u.id === m.usuario_id))
+    .map(m => ({ usuario_id: m.usuario_id, rol: m.rol }));
 
   // Validaciones de consistencia contractual.
   const subtotal = parseFloat(monto);
@@ -119,6 +129,7 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fiel
   const newContract = store.insert('contratos', {
     folio,
     objeto,
+    ubicacion_obra: (ubicacion_obra || '').trim(),
     estado: 'vigente',
     dependencia_id: req.body.dependencia_id || null,
     empresa_id: req.body.empresa_id || null,
@@ -132,6 +143,7 @@ router.post('/contratos', authenticate, authorizeRoles('residente'), upload.fiel
     residente_id,
     superintendente_id,
     supervision_id,
+    equipo: equipoNormalizado,
     pdf_contrato: pdfFile ? `/uploads/${pdfFile.filename}` : null,
     pdf_contrato_inmutable: Boolean(pdfFile),
     catalogo,
@@ -239,12 +251,7 @@ router.get('/contratos', authenticate, (req, res) => {
     return res.json(all);
   }
 
-  const filtered = all.filter(c =>
-    c.residente_id === user.id ||
-    c.superintendente_id === user.id ||
-    c.supervision_id === user.id ||
-    c.creado_por_id === user.id
-  );
+  const filtered = all.filter(c => userCanAccessContract(user, c));
   return res.json(filtered);
 });
 
@@ -271,6 +278,7 @@ router.get('/contratos/:id', authenticate, (req, res) => {
   const contractDocumentos = store.find('documentos', d => d.contrato_id === contract.id);
   const contractVersiones = store.find('contrato_versiones', v => v.contrato_id === contract.id);
   const contractTrabajos = store.find('trabajos_periodo', t => t.contrato_id === contract.id);
+  const contractArchivoFotografico = store.find('archivo_fotografico', f => f.contrato_id === contract.id);
 
   return res.json({
     ...contract,
@@ -281,7 +289,8 @@ router.get('/contratos/:id', authenticate, (req, res) => {
     alertas: contractAlertas,
     documentos: contractDocumentos,
     versiones: contractVersiones,
-    trabajos_periodo: contractTrabajos
+    trabajos_periodo: contractTrabajos,
+    archivo_fotografico: contractArchivoFotografico
   });
 });
 

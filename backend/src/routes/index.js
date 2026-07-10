@@ -16,5 +16,6 @@ router.use(require('./pagos.routes'));
 router.use(require('./alertas.routes'));
 router.use(require('./notificaciones.routes'));
 router.use(require('./catalogo.routes'));
+router.use(require('./archivoFotografico.routes'));
 
 module.exports = router;

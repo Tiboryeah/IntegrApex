@@ -82,6 +82,7 @@
             <h2>Expediente del Contrato (HU-04)</h2>
             <table style="width: 100%; margin-top:16px;">
               <tr><td style="color: var(--text-muted); font-weight:600; width: 35%;">Folio de Obra:</td><td><strong>${escapeHtml(contract.folio)}</strong></td></tr>
+              <tr><td style="color: var(--text-muted); font-weight:600;">Ubicación de la Obra:</td><td>${escapeHtml(contract.ubicacion_obra) || 'Sin capturar'}</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Monto Contratado (Sin IVA):</td><td>$${contract.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Monto Contratado (Con IVA):</td><td>$${(contract.monto * 1.16).toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
               <tr><td style="color: var(--text-muted); font-weight:600;">Plazo Contractual:</td><td>${contract.plazo_dias} Dias naturales</td></tr>
@@ -90,6 +91,7 @@
               <tr><td style="color: var(--text-muted); font-weight:600;">PDF de Contrato Firmado:</td><td>
                 ${contract.pdf_contrato ? `<a href="${contract.pdf_contrato}" target="_blank" style="color: var(--ipn-maroon-light); font-weight:600; text-decoration:none; display:flex; align-items:center; gap:6px;"><span class="material-icons-round" style="font-size:16px;">open_in_new</span> Abrir PDF Respaldo</a>` : '<span style="color:var(--text-muted);">Sin PDF cargado</span>'}
               </td></tr>
+              <tr><td style="color: var(--text-muted); font-weight:600; vertical-align:top;">Equipo Asignado:</td><td id="equipo-asignado-cell">Cargando...</td></tr>
             </table>
             ${juridicosHtml}
           </div>
@@ -242,6 +244,42 @@
         e.preventDefault();
         this.searchExpediente();
       });
+
+      this.renderEquipoAsignado(contract);
+    },
+
+    // EQUIPO ASIGNADO: Resuelve los IDs del equipo (residente, contratista, supervisión y cualquier integrante adicional) a nombre + rol.
+    async renderEquipoAsignado(contract) {
+      const cell = document.getElementById('equipo-asignado-cell');
+      if (!cell) return;
+      try {
+        const users = await this.api('/api/users');
+        const userMap = Object.fromEntries(users.map(u => [u.id, u]));
+        const rolLabels = { residente: 'Residente', contratista: 'Contratista', supervision: 'Supervisión', dependencia: 'Dependencia', finanzas: 'Finanzas' };
+
+        const miembros = [];
+        if (contract.residente_id) miembros.push({ usuario_id: contract.residente_id, rol: 'residente' });
+        if (contract.superintendente_id) miembros.push({ usuario_id: contract.superintendente_id, rol: 'contratista' });
+        if (contract.supervision_id) miembros.push({ usuario_id: contract.supervision_id, rol: 'supervision' });
+        (contract.equipo || []).forEach(m => {
+          if (!miembros.some(existing => existing.usuario_id === m.usuario_id && existing.rol === m.rol)) {
+            miembros.push(m);
+          }
+        });
+
+        if (miembros.length === 0) {
+          cell.textContent = 'Sin integrantes asignados';
+          return;
+        }
+
+        cell.innerHTML = miembros.map(m => {
+          const u = userMap[m.usuario_id];
+          const nombre = u ? escapeHtml(u.nombre) : 'Usuario no encontrado';
+          return `<div style="margin-bottom:4px;"><span class="user-badge" style="background:#f1f5f9; color:#334155; font-size:11px; font-weight:700; margin-right:6px;">${rolLabels[m.rol] || m.rol}</span>${nombre}</div>`;
+        }).join('');
+      } catch (e) {
+        cell.textContent = 'No se pudo cargar el equipo';
+      }
     },
 
     // CATÁLOGO DE CONCEPTOS (HU-01): Renderiza la pestaña con el desglose del catálogo original del contrato (clave, descripción, unidad, cantidad y precio).

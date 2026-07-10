@@ -197,6 +197,7 @@ async function createContract(residente) {
   const multipart = {
     folio,
     objeto: 'Construccion de prueba verificable',
+    ubicacion_obra: 'Calle de Prueba 123, Ciudad de Mexico',
     monto: '20000',
     anticipo_porcentaje: '30',
     plazo_dias: '60',

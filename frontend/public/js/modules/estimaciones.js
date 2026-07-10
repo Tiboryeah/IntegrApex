@@ -1,6 +1,64 @@
 (function () {
   window.IntegrApexModules = window.IntegrApexModules || {};
 
+  // Convierte un entero 0-999 a letras (mayúsculas), usado por numeroALetras.
+  function convertirGrupo(n) {
+    const UNIDADES = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
+    const DIECI = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+    const VEINTI = ['VEINTE', 'VEINTIUNO', 'VEINTIDOS', 'VEINTITRES', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISEIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
+    const DECENAS = ['', '', '', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+    const CENTENAS = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
+
+    if (n === 0) return '';
+    if (n === 100) return 'CIEN';
+
+    const c = Math.floor(n / 100);
+    const resto = n % 100;
+    let out = c > 0 ? CENTENAS[c] : '';
+
+    if (resto > 0) {
+      let restoTxt;
+      if (resto < 10) restoTxt = UNIDADES[resto];
+      else if (resto < 20) restoTxt = DIECI[resto - 10];
+      else if (resto < 30) restoTxt = VEINTI[resto - 20];
+      else {
+        const d = Math.floor(resto / 10);
+        const u = resto % 10;
+        restoTxt = DECENAS[d] + (u > 0 ? ' Y ' + UNIDADES[u] : '');
+      }
+      out = out ? out + ' ' + restoTxt : restoTxt;
+    }
+    return out.trim();
+  }
+
+  // Convierte un monto a su representación en letras estilo documento oficial mexicano (Ej. "DOS MIL PESOS 00/100 M.N.").
+  function numeroALetras(monto) {
+    monto = Math.abs(parseFloat(monto) || 0);
+    const entero = Math.floor(monto);
+    const centavos = Math.round((monto - entero) * 100);
+
+    if (entero === 0) {
+      return `CERO PESOS ${String(centavos).padStart(2, '0')}/100 M.N.`;
+    }
+
+    const millones = Math.floor(entero / 1000000);
+    const miles = Math.floor((entero % 1000000) / 1000);
+    const cientos = entero % 1000;
+
+    const partes = [];
+    if (millones > 0) {
+      partes.push(millones === 1 ? 'UN MILLON' : convertirGrupo(millones) + ' MILLONES');
+    }
+    if (miles > 0) {
+      partes.push(miles === 1 ? 'MIL' : convertirGrupo(miles) + ' MIL');
+    }
+    if (cientos > 0) {
+      partes.push(convertirGrupo(cientos));
+    }
+
+    return `${partes.join(' ').trim()} PESOS ${String(centavos).padStart(2, '0')}/100 M.N.`;
+  }
+
   window.IntegrApexModules.estimaciones = {
     // ==========================================
     // Tablero de estimaciones activas (HU-17).
@@ -29,7 +87,7 @@
           en_pago: 'badge-review',
           pagada: 'badge-paid'
         };
-        const money = v => `$${(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+        const money = v => `$${(v || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
         const resumenCards = ['presentada', 'en_revision', 'autorizada', 'en_pago', 'pagada'].map(estado => {
           const info = resumen.por_estado[estado] || { count: 0, monto: 0 };
@@ -163,8 +221,8 @@
               <tr style="cursor:pointer;" onclick="app.viewEstimacionDetail('${e.id}')">
                 <td><strong>Periodo #${e.periodo_numero}</strong></td>
                 <td>${e.fecha_inicio} al ${e.fecha_fin}</td>
-                <td>$${e.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                <td>$${e.liquido_a_pagar.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                <td>$${e.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td>$${e.liquido_a_pagar.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                 <td><span class="badge ${badgeClass}">${e.estado}</span></td>
                 <td>${plazoBadge}</td>
                 <td>
@@ -428,6 +486,23 @@
       return `<span class="badge ${badgeClass}">${texto}</span>`;
     },
 
+    // HOJA DE RUTA: renderiza un paso de la línea de tiempo de custodia (equivalente digital de la hoja de ruta física).
+    renderHojaRutaPaso(paso) {
+      const completado = !!paso.fecha;
+      return `
+        <div class="hoja-ruta-paso ${completado ? 'completado' : 'pendiente'}">
+          <div class="hoja-ruta-marcador">
+            <span class="material-icons-round">${completado ? 'check_circle' : 'schedule'}</span>
+          </div>
+          <div class="hoja-ruta-contenido">
+            <strong>${escapeHtml(paso.titulo)}</strong>
+            <div class="hoja-ruta-responsable">${escapeHtml(paso.responsable)} <span>· ${escapeHtml(paso.rol)}</span></div>
+            <div class="hoja-ruta-fecha">${completado ? new Date(paso.fecha).toLocaleString('es-MX') : 'Pendiente'}</div>
+          </div>
+        </div>
+      `;
+    },
+
     // DETALLE DE ESTIMACIÓN (HU-12 a HU-21): Renderiza el desglose financiero, conceptos, anexos y controles por rol.
     async viewEstimacionDetail(estId) {
       const outlet = document.getElementById('app-router-outlet');
@@ -436,6 +511,47 @@
         const est = await this.api(`/api/contratos/${this.state.currentContractId}/estimaciones`);
         const data = est.find(e => e.id === estId);
         const contract = this.state.currentContractData;
+
+        const [usuarios, empresas, dependencias] = await Promise.all([
+          this.api('/api/users'),
+          this.loadEmpresasOpts(),
+          this.loadDependenciasOpts()
+        ]);
+        const empresaContrato = empresas.find(e => e.id === contract.empresa_id);
+        const dependenciaContrato = dependencias.find(d => d.id === contract.dependencia_id);
+        const nombreUsuario = id => usuarios.find(u => u.id === id)?.nombre || 'Sin asignar';
+
+        const anteriores = est.filter(e => e.id !== data.id && e.estado !== 'rechazada' && e.periodo_numero < data.periodo_numero);
+        const subtotalAcumuladoAnterior = anteriores.reduce((sum, e) => sum + (e.subtotal || 0), 0);
+        const anticipoAcumuladoAnterior = anteriores.reduce((sum, e) => sum + (e.anticipo_amortizado || 0), 0);
+        const subtotalAcumuladoActual = subtotalAcumuladoAnterior + data.subtotal;
+        const anticipoAcumuladoActual = anticipoAcumuladoAnterior + data.anticipo_amortizado;
+        const anticipoContrato = contract.anticipo_monto || (contract.monto * (contract.anticipo_porcentaje || 0) / 100);
+
+        // Cantidades acumuladas hasta la estimación anterior, por concepto, para la tabla de Servicios Ejecutados.
+        const cantidadesAnteriores = {};
+        contract.catalogo.forEach(c => { cantidadesAnteriores[c.clave] = 0; });
+        anteriores.forEach(e => {
+          Object.entries(e.avances || {}).forEach(([clave, qty]) => {
+            cantidadesAnteriores[clave] = (cantidadesAnteriores[clave] || 0) + parseFloat(qty || 0);
+          });
+        });
+
+        // HOJA DE RUTA: equivalente digital de la hoja de ruta física — trazabilidad de custodia y responsables por etapa.
+        const pasosHojaRuta = [
+          { titulo: 'Integración de la estimación', responsable: nombreUsuario(contract.superintendente_id), rol: 'Contratista', fecha: data.fecha_creacion },
+          { titulo: 'Presentación formal a revisión', responsable: nombreUsuario(contract.superintendente_id), rol: 'Contratista', fecha: data.fecha_presentacion }
+        ];
+        if (data.estado === 'rechazada') {
+          pasosHojaRuta.push({ titulo: 'Rechazo de la estimación (residencia)', responsable: nombreUsuario(contract.residente_id), rol: 'Residente de Obra', fecha: data.fecha_autorizacion_residencia });
+        } else {
+          pasosHojaRuta.push(
+            { titulo: 'Revisión técnica y turno a Residencia', responsable: nombreUsuario(contract.supervision_id), rol: 'Supervisión', fecha: data.fecha_revision_supervision },
+            { titulo: 'Autorización de la estimación', responsable: nombreUsuario(contract.residente_id), rol: 'Residente de Obra', fecha: data.fecha_autorizacion_residencia },
+            { titulo: 'Instrucción de pago (factura y CFDI)', responsable: 'Contratista / Finanzas', rol: 'Finanzas', fecha: data.fecha_instruccion_pago },
+            { titulo: 'Registro de pago efectuado', responsable: data.pago_usuario_id ? nombreUsuario(data.pago_usuario_id) : 'Finanzas', rol: 'Finanzas', fecha: data.fecha_pago_efectuado }
+          );
+        }
 
         let notasVinculadas = [];
         if ((data.notas_vinculadas_ids || []).length) {
@@ -556,16 +672,53 @@
           `;
         }
 
+        // RESUMEN POR PARTIDA: agrupa los conceptos de esta estimación por su partida (campo opcional del catálogo).
+        const partidaGroups = {};
+        contract.catalogo.forEach(c => {
+          const key = c.partida || 'Sin Partida';
+          if (!partidaGroups[key]) partidaGroups[key] = [];
+          const qty = parseFloat(data.avances[c.clave] || 0);
+          partidaGroups[key].push({ clave: c.clave, descripcion: c.descripcion, importe: qty * c.precio_unitario });
+        });
+
+        let partidaRows = '';
+        Object.entries(partidaGroups).forEach(([partida, items]) => {
+          const subtotalPartida = items.reduce((s, i) => s + i.importe, 0);
+          partidaRows += `<tr style="background:#f8fafc;"><td colspan="2" style="font-weight:700; color:var(--escom-blue);">${escapeHtml(partida)}</td><td></td></tr>`;
+          items.forEach(i => {
+            partidaRows += `
+              <tr>
+                <td style="padding-left:28px;">${escapeHtml(i.clave)}</td>
+                <td>${escapeHtml(i.descripcion)}</td>
+                <td>$${i.importe.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            `;
+          });
+          partidaRows += `<tr style="font-weight:700; border-top:1px solid #cbd5e1;"><td colspan="2" style="text-align:right;">Subtotal ${escapeHtml(partida)}:</td><td>$${subtotalPartida.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`;
+        });
+
         let conceptRows = '';
-        Object.entries(data.avances).forEach(([clave, qty]) => {
-          const concept = contract.catalogo.find(c => c.clave === clave);
+        let importeServiciosTotal = 0;
+        contract.catalogo.forEach(concept => {
+          const segunProyecto = concept.cantidad;
+          const hastaAnterior = cantidadesAnteriores[concept.clave] || 0;
+          const deEstaEstimacion = parseFloat(data.avances[concept.clave] || 0);
+          const totalEstimado = hastaAnterior + deEstaEstimacion;
+          const porEjecutar = segunProyecto - totalEstimado;
+          const importe = deEstaEstimacion * concept.precio_unitario;
+          importeServiciosTotal += importe;
+
           conceptRows += `
             <tr>
-              <td><strong>${escapeHtml(clave)}</strong></td>
-              <td>${escapeHtml(concept.descripcion)}</td>
-              <td>${qty.toLocaleString('es-MX')} ${escapeHtml(concept.unidad)}</td>
-              <td>$${concept.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-              <td>$${(qty * concept.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+              <td><strong>${escapeHtml(concept.clave)}</strong><br><span style="font-size:11.5px; color:var(--text-muted);">${escapeHtml(concept.descripcion)}</span></td>
+              <td style="white-space:nowrap;">${escapeHtml(concept.unidad)}</td>
+              <td style="white-space:nowrap;">${segunProyecto.toLocaleString('es-MX')}</td>
+              <td style="white-space:nowrap;">${hastaAnterior.toLocaleString('es-MX')}</td>
+              <td style="white-space:nowrap; font-weight:600;">${deEstaEstimacion.toLocaleString('es-MX')}</td>
+              <td style="white-space:nowrap; font-weight:600;">${totalEstimado.toLocaleString('es-MX')}</td>
+              <td style="white-space:nowrap;">${porEjecutar.toLocaleString('es-MX')}</td>
+              <td style="white-space:nowrap;">$${concept.precio_unitario.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td style="white-space:nowrap;">$${importe.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             </tr>
           `;
         });
@@ -583,35 +736,154 @@
             </div>
 
             <div class="glass-panel">
-              <h2>Carátula de estimación (liquidación)</h2>
-              <table style="width:100%; margin-top:16px;">
-                <tr><td style="color:var(--text-muted); font-weight:600; width:45%;">Estatus actual:</td><td><span class="badge badge-presented">${data.estado.toUpperCase()}</span></td></tr>
-                ${data.plazo_revision ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de revisión (Art. 54 LOPSRM, 15 días):</td><td>${this.renderPlazoBadge(data.plazo_revision)}</td></tr>` : ''}
-                ${data.plazo_pago ? `<tr><td style="color:var(--text-muted); font-weight:600;">Plazo de pago (Art. 54 LOPSRM, 20 días):</td><td>${this.renderPlazoBadge(data.plazo_pago)}</td></tr>` : ''}
-                <tr><td style="color:var(--text-muted); font-weight:600;">Importe de los Trabajos Ejecutados:</td><td>$${data.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
-                <tr><td style="color:var(--text-muted); font-weight:600;">Amortizacion del Anticipo (${contract.anticipo_porcentaje}%):</td><td style="color:var(--accent-red); font-weight:600;">- $${data.anticipo_amortizado.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
-                <tr><td style="color:var(--text-muted); font-weight:600;">Retencion 5 al millar (Vigilancia e Inspeccion, Art. 191 LFD):</td><td style="color:var(--accent-red); font-weight:600;">- $${data.retencion_5_millar.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
-                <tr><td style="color:var(--text-muted); font-weight:600;">Otras Penalizaciones:</td><td style="color:var(--accent-red); font-weight:600;">- $${data.penalizaciones.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
-                <tr style="border-top:2px solid var(--border-color); font-weight:700; font-size:15px;"><td style="color:#0f172a;">LIQUIDO A PAGAR AL CONTRATISTA:</td><td style="color:var(--accent-green);">$${data.liquido_a_pagar.toLocaleString('es-MX', { minimumFractionDigits: 2 })} M.N.</td></tr>
+              <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px;">
+                <span style="font-size:12px; font-weight:700; color:var(--text-muted);">ESTATUS ACTUAL:</span>
+                <span class="badge badge-presented">${data.estado.toUpperCase()}</span>
+                ${data.plazo_revision ? this.renderPlazoBadge(data.plazo_revision) : ''}
+                ${data.plazo_pago ? this.renderPlazoBadge(data.plazo_pago) : ''}
+              </div>
+            </div>
+
+            <div class="glass-panel caratula-oficial">
+              <div class="caratula-titlebar">
+                <div>
+                  <div class="caratula-eyebrow">${escapeHtml(contract.folio)}</div>
+                  <h2>Carátula de Estimación</h2>
+                </div>
+                <table class="caratula-table caratula-box-numero">
+                  <tr><td>ESTIMACIÓN NÚMERO</td><td>PERIODO</td></tr>
+                  <tr><td><strong>${data.periodo_numero}</strong></td><td><strong>${data.fecha_inicio} al ${data.fecha_fin}</strong></td></tr>
+                  <tr><td>HOJA</td><td>FECHA</td></tr>
+                  <tr><td><strong>1 de 1</strong></td><td><strong>${new Date(data.fecha_creacion || Date.now()).toLocaleDateString('es-MX')}</strong></td></tr>
+                </table>
+              </div>
+
+              <table class="caratula-table caratula-header-table">
+                <tr><td class="label">DESCRIPCIÓN DE LA OBRA O SERVICIO</td><td colspan="3">${escapeHtml(contract.objeto)}</td></tr>
+                <tr>
+                  <td class="label">NÚMERO DE CONTRATO</td><td>${escapeHtml(contract.folio)}</td>
+                  <td class="label">FECHA DEL CONTRATO</td><td>${contract.fecha_inicio}</td>
+                </tr>
+                <tr>
+                  <td class="label">CONTRATISTA (RAZÓN SOCIAL)</td><td>${escapeHtml(empresaContrato?.razon_social || empresaContrato?.nombre_comercial) || 'Sin capturar'}</td>
+                  <td class="label">R.F.C.</td><td>${escapeHtml(empresaContrato?.rfc) || 'Sin capturar'}</td>
+                </tr>
+              </table>
+
+              <h3 class="caratula-seccion">1. Importes sin incluir I.V.A.</h3>
+              <table class="caratula-table">
+                <thead><tr><th></th><th>Importe</th><th>Porcentaje</th></tr></thead>
+                <tbody>
+                  <tr><td>Importe del Contrato</td><td>$${contract.monto.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>100.00%</td></tr>
+                  <tr><td>Importe Estimado Acumulado Anterior</td><td>$${subtotalAcumuladoAnterior.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(contract.monto ? subtotalAcumuladoAnterior / contract.monto * 100 : 0).toFixed(2)}%</td></tr>
+                  <tr><td>Importe de la Estimación Actual</td><td>$${data.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(contract.monto ? data.subtotal / contract.monto * 100 : 0).toFixed(2)}%</td></tr>
+                  <tr style="font-weight:700;"><td>Importe Estimado Acumulado Actual</td><td>$${subtotalAcumuladoActual.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(contract.monto ? subtotalAcumuladoActual / contract.monto * 100 : 0).toFixed(2)}%</td></tr>
+                  <tr><td>Saldo por Estimar</td><td>$${(contract.monto - subtotalAcumuladoActual).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(contract.monto ? (contract.monto - subtotalAcumuladoActual) / contract.monto * 100 : 0).toFixed(2)}%</td></tr>
+                </tbody>
+              </table>
+
+              <h3 class="caratula-seccion">2. Del Anticipo</h3>
+              <table class="caratula-table">
+                <thead><tr><th></th><th>Importe</th><th>Porcentaje</th></tr></thead>
+                <tbody>
+                  <tr><td>Importe del Anticipo</td><td>$${anticipoContrato.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>100.00%</td></tr>
+                  <tr><td>Importe Amortizado Acumulado Anterior</td><td>$${anticipoAcumuladoAnterior.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(anticipoContrato ? anticipoAcumuladoAnterior / anticipoContrato * 100 : 0).toFixed(2)}%</td></tr>
+                  <tr><td>Importe de la Amortización Actual</td><td>$${data.anticipo_amortizado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(anticipoContrato ? data.anticipo_amortizado / anticipoContrato * 100 : 0).toFixed(2)}%</td></tr>
+                  <tr style="font-weight:700;"><td>Importe Amortizado Acumulado Actual</td><td>$${anticipoAcumuladoActual.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(anticipoContrato ? anticipoAcumuladoActual / anticipoContrato * 100 : 0).toFixed(2)}%</td></tr>
+                  <tr><td>Saldo por Amortizar</td><td>$${(anticipoContrato - anticipoAcumuladoActual).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td><td>${(anticipoContrato ? (anticipoContrato - anticipoAcumuladoActual) / anticipoContrato * 100 : 0).toFixed(2)}%</td></tr>
+                </tbody>
+              </table>
+
+              <h3 class="caratula-seccion">3. Del Neto a Recibir</h3>
+              <table class="caratula-table caratula-table-single">
+                <tbody>
+                  <tr><td>Importe Estimación</td><td>$${data.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                  <tr><td>I.V.A. Estimación (16%)</td><td>$${data.iva.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                  <tr style="font-weight:700;"><td>Total de Estimación</td><td>$${data.total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                  <tr><td>Amortización Anticipo (${contract.anticipo_porcentaje}%)</td><td>- $${data.anticipo_amortizado.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                  <tr><td>Retenciones (5 al millar, Art. 191 LFD)</td><td>- $${data.retencion_5_millar.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                  <tr><td>Trabajos No Ejecutados / Penalizaciones</td><td>- $${data.penalizaciones.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                  <tr class="total-row"><td>TOTAL NETO A PAGAR</td><td>$${data.liquido_a_pagar.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>
+                </tbody>
+              </table>
+              <p class="caratula-letras">(${numeroALetras(data.liquido_a_pagar)})</p>
+
+              <div class="caratula-firmas">
+                <div class="firma-col">
+                  <div class="firma-linea"></div>
+                  <strong>Formuló</strong>
+                  <div>${escapeHtml(nombreUsuario(contract.superintendente_id))}</div>
+                  <span>Contratista</span>
+                </div>
+                <div class="firma-col">
+                  <div class="firma-linea"></div>
+                  <strong>Revisó</strong>
+                  <div>${escapeHtml(nombreUsuario(contract.supervision_id))}</div>
+                  <span>Supervisión</span>
+                </div>
+                <div class="firma-col">
+                  <div class="firma-linea"></div>
+                  <strong>Autorizó</strong>
+                  <div>${escapeHtml(nombreUsuario(contract.residente_id))}</div>
+                  <span>Residente de Obra</span>
+                </div>
+                <div class="firma-col">
+                  <div class="firma-linea"></div>
+                  <strong>Vo. Bo.</strong>
+                  <div>${escapeHtml(dependenciaContrato?.nombre_contacto) || escapeHtml(dependenciaContrato?.nombre) || 'Sin asignar'}</div>
+                  <span>Dependencia</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-panel caratula-oficial">
+              <h2>Resumen por Partida</h2>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px; margin-bottom:12px;">Desglose del importe de esta estimación agrupado por partida del catálogo.</p>
+              <table class="caratula-table">
+                <thead><tr><th>Núm. de Partida / Clave</th><th>Descripción</th><th>Importe</th></tr></thead>
+                <tbody>${partidaRows}</tbody>
+                <tfoot><tr class="total-row"><td colspan="2">TOTAL</td><td>$${data.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr></tfoot>
               </table>
             </div>
 
             <div class="glass-panel">
-              <h2>Detalle de Conceptos Ejecutados</h2>
-              <div class="table-container" style="margin-top:16px;">
-                <table>
+              <h2>Estimación de Servicios Ejecutados</h2>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px; margin-bottom:12px;">Cantidades de obra por concepto: contratado, acumulado a estimaciones previas, de este periodo, acumulado total y remanente por ejecutar.</p>
+              <div class="table-container" style="margin-top:16px; overflow-x:auto;">
+                <table style="min-width:1000px; table-layout:fixed;">
+                  <colgroup>
+                    <col style="width:250px;">
+                    <col style="width:90px;">
+                    <col style="width:100px;">
+                    <col style="width:110px;">
+                    <col style="width:110px;">
+                    <col style="width:100px;">
+                    <col style="width:100px;">
+                    <col style="width:110px;">
+                    <col style="width:130px;">
+                  </colgroup>
                   <thead>
                     <tr>
-                      <th>Clave</th>
-                      <th>Concepto</th>
-                      <th>Cantidad</th>
-                      <th>Precio</th>
+                      <th>Concepto / Especificación</th>
+                      <th>Unidad</th>
+                      <th>Según Proyecto</th>
+                      <th>Hasta Est. Anterior</th>
+                      <th>De Esta Estimación</th>
+                      <th>Total Estimado</th>
+                      <th>Por Ejecutar</th>
+                      <th>Precio Unitario</th>
                       <th>Importe</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${conceptRows}
                   </tbody>
+                  <tfoot>
+                    <tr style="font-weight:700; border-top:2px solid #0f172a;">
+                      <td colspan="8" style="text-align:right;">Importe Total de esta Estimación:</td>
+                      <td>$${importeServiciosTotal.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
@@ -640,6 +912,14 @@
                     : `<ul class="doc-list">${notasVinculadas.map(n => `<li>Nota #${n.folio} (${escapeHtml(n.tipo)})</li>`).join('')}</ul>`
                   }
                 </div>
+              </div>
+            </div>
+
+            <div class="glass-panel">
+              <h2>Hoja de Ruta de la Estimación</h2>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-top:4px; margin-bottom:16px;">Trazabilidad de custodia y responsables por etapa — equivalente digital de la hoja de ruta física de estimaciones para pago.</p>
+              <div class="hoja-ruta-lista">
+                ${pasosHojaRuta.map(p => this.renderHojaRutaPaso(p)).join('')}
               </div>
             </div>
 

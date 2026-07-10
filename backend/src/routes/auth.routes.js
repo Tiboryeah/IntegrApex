@@ -157,8 +157,8 @@ router.get('/admin/usuarios', authenticate, authorizeRoles('dependencia'), (req,
   return res.json(todos);
 });
 
-// Crear usuario directamente (Dependencia) — queda aprobado de inmediato
-router.post('/admin/usuarios', authenticate, authorizeRoles('dependencia'), (req, res) => {
+// Crear usuario directamente (Dependencia, o Residente para su equipo de contrato) — queda aprobado de inmediato
+router.post('/admin/usuarios', authenticate, authorizeRoles('dependencia', 'residente'), (req, res) => {
   const { email, password, nombre, rol, telefono, cargo, titulo, especialidad, cedula, nss, empresa_id, dependencia_id, notas } = req.body;
 
   if (!email || !password || !nombre || !rol) {
@@ -175,6 +175,8 @@ router.post('/admin/usuarios', authenticate, authorizeRoles('dependencia'), (req
     return res.status(400).json({ error: 'Rol no válido' });
   }
 
+  // A pedido del cliente, un residente puede dar de alta cualquier rol desde el alta de contrato,
+  // igual que lo hace una dependencia desde Gestión de Usuarios.
   const nuevo = store.insert('usuarios', {
     email: email.trim().toLowerCase(),
     contrasena: password,

@@ -102,6 +102,7 @@
             <div class="tab" onclick="app.switchTab('programa')">Programa y avance</div>
             <div class="tab" onclick="app.switchTab('fianzas')">Garantías</div>
             <div class="tab" onclick="app.switchTab('documentos')">Minutas / Visitas</div>
+            <div class="tab" onclick="app.switchTab('fotografico')">Archivo Fotográfico</div>
             <div class="tab" onclick="app.switchTab('bitacora')">Bitácora de notas</div>
             <div class="tab" onclick="app.switchTab('convenios')">Convenios</div>
           </div>
@@ -141,6 +142,7 @@
       programa: 'renderProgramaTab',
       fianzas: 'renderFianzasTab',
       documentos: 'renderDocumentosTab',
+      fotografico: 'renderArchivoFotograficoTab',
       bitacora: 'renderBitacoraTab',
       convenios: 'renderConveniosTab'
     };
