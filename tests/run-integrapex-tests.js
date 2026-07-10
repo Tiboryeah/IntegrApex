@@ -449,6 +449,24 @@ async function accessAndRegistration() {
   await expectOk(await dependencia.post('/api/admin/approve', {
     data: { userId: register.user.id, approve: true, role: 'supervision' }
   }), 'Registro aprobar');
+  const edited = await json(await dependencia.put(`/api/admin/usuarios/${register.user.id}`, {
+    data: {
+      email,
+      nombre: 'Usuario Nuevo Editado',
+      rol: 'supervision',
+      estado: 'aprobado',
+      telefono: '5512345678',
+      titulo: 'Ing.',
+      especialidad: 'Control documental',
+      cedula: '1234567',
+      nss: '12345678901',
+      notas: 'Edicion verificada por prueba automatizada'
+    }
+  }), 'Admin editar usuario');
+  assert(edited.user.nombre === 'Usuario Nuevo Editado', 'Admin editar usuario no actualizo nombre');
+  const updatedUsers = await json(await dependencia.get('/api/admin/usuarios'), 'Admin listar tras editar');
+  const updatedUser = updatedUsers.find(u => u.id === register.user.id);
+  assert(updatedUser && updatedUser.telefono === '5512345678' && updatedUser.especialidad === 'Control documental', 'Admin editar usuario no persistio datos profesionales');
 
   const approved = await login(email, 'IntegrApex2026!');
   const me = await json(await approved.get('/api/auth/me'), 'HU-00 rol deducido');

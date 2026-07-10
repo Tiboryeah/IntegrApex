@@ -203,4 +203,70 @@ router.post('/admin/usuarios', authenticate, authorizeRoles('dependencia', 'resi
   });
 });
 
+router.put('/admin/usuarios/:id', authenticate, authorizeRoles('dependencia'), (req, res) => {
+  const { email, password, nombre, rol, estado, telefono, cargo, titulo, especialidad, cedula, nss, empresa_id, dependencia_id, notas, foto_url } = req.body;
+  const userId = req.params.id;
+  const user = store.findOne('usuarios', u => u.id === userId);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Usuario no encontrado' });
+  }
+
+  if (!email || !nombre || !rol) {
+    return res.status(400).json({ error: 'Nombre, correo y rol son obligatorios' });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  const existe = store.findOne('usuarios', u => u.id !== userId && u.email === normalizedEmail);
+  if (existe) {
+    return res.status(400).json({ error: `El correo ${email} ya estÃ¡ registrado` });
+  }
+
+  const rolesValidos = ['residente', 'contratista', 'supervision', 'dependencia', 'finanzas'];
+  if (!rolesValidos.includes(rol)) {
+    return res.status(400).json({ error: 'Rol no vÃ¡lido' });
+  }
+
+  const estadosValidos = ['aprobado', 'pendiente', 'rechazado'];
+  if (estado && !estadosValidos.includes(estado)) {
+    return res.status(400).json({ error: 'Estado no vÃ¡lido' });
+  }
+
+  const updates = {
+    email: normalizedEmail,
+    nombre: nombre.trim(),
+    rol,
+    estado: estado || user.estado || 'aprobado',
+    telefono: (telefono || '').trim(),
+    cargo: (cargo || '').trim(),
+    titulo: (titulo || '').trim(),
+    especialidad: (especialidad || '').trim(),
+    cedula: (cedula || '').trim(),
+    nss: (nss || '').trim(),
+    empresa_id: empresa_id || null,
+    dependencia_id: dependencia_id || null,
+    notas: (notas || '').trim(),
+    foto_url: foto_url || user.foto_url || null,
+    actualizado_por: req.user.nombre,
+    actualizado_en: new Date().toISOString()
+  };
+
+  if (password) {
+    updates.contrasena = password;
+  }
+
+  const actualizado = store.update('usuarios', userId, updates);
+
+  return res.json({
+    message: 'Usuario actualizado con Ã©xito',
+    user: {
+      id: actualizado.id,
+      email: actualizado.email,
+      nombre: actualizado.nombre,
+      rol: actualizado.rol,
+      estado: actualizado.estado
+    }
+  });
+});
+
 module.exports = router;
